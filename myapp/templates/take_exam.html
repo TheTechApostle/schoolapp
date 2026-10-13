@@ -1,0 +1,291 @@
+{% load django_browser_reload %}
+{% django_browser_reload_script %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ exam.title }} - Take Exam</title>
+<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+body {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+}
+.exam-container {
+    max-width: 900px;
+    margin: 50px auto;
+    background: #f4f6f8;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+}
+.sticky-header {
+    position: sticky;
+    top: 0;
+    background: #f4f6f8;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    z-index: 10;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+#timer {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #0072ff;
+}
+.question-card {
+    display: none;
+    padding: 25px;
+    border-radius: 12px;
+    background: #fff;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    transition: all 0.5s ease;
+    transform: translateX(100%);
+    opacity: 0;
+}
+.question-card.active {
+    display: block;
+    transform: translateX(0);
+    opacity: 1;
+}
+.form-check-label {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.form-check-input:checked + .form-check-label {
+    background: rgba(0,198,255,0.1);
+    border-radius: 8px;
+    padding: 5px 10px;
+}
+.progress-container {
+    height: 12px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 10px;
+    margin-bottom: 25px;
+    overflow: hidden;
+}
+.progress-bar {
+    height: 12px;
+    background: linear-gradient(90deg, #db5000ff, #b0000fff);
+    width: 0;
+    transition: width 0.4s;
+}
+.btn-nav {
+    background: #00b4db;
+    color: #fff;
+    border: none;
+    padding: 10px 25px;
+    font-size: 1rem;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+}
+.btn-nav:hover {
+    background: #0083b0;
+    color: #fff;
+}
+.d-flex-center { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
+@media (max-width: 576px) { .btn-nav { padding: 8px 20px; font-size: 0.9rem; } }
+</style>
+</head>
+<body>
+<div class="container py-5">
+    <div class="exam-container">
+
+        <!-- Sticky Header -->
+        <div class="sticky-header">
+            <h3>{{ exam.title }}</h3>
+            <p class="text-muted">Course: {{ exam.course.title }} | Total Questions: {{ questions.count }} | <a class="btn btn-info p-2 rounded-3" style='background:#00ccff; padding:3px; border-radius:3px 3px'> {{term}} <span class="bg-danger">({{ selected_session }})</span></a></p>
+            <div class="d-flex align-items-center mb-3">
+                <div id="timer">00:00</div>
+                <div class="progress-container flex-grow-1 ms-3">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" id="examForm">
+            {% csrf_token %}
+            {% for question in questions %}
+            <div class="question-card {% if forloop.first %}active{% endif %}" data-index="{{ forloop.counter0 }}">
+                <div class="d-flex gap-2">
+                    <p><strong>Q{{ forloop.counter }}. {{ question.question_text|safe }}</strong>
+                        <button type="button"
+                                class="btn btn-sm btn-primary ms-2"
+                                onclick="speakQuestion('{{ question.question_text|escapejs }}')">
+                            <i class="fas fa-volume-up"></i> Listen
+                        </button>
+                    </p>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}a" value="A">
+                    <label class="form-check-label" for="q{{ question.id }}a">{{ question.option_a }}</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}b" value="B">
+                    <label class="form-check-label" for="q{{ question.id }}b">{{ question.option_b }}</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}c" value="C">
+                    <label class="form-check-label" for="q{{ question.id }}c">{{ question.option_c }}</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="q{{ question.id }}d" value="D">
+                    <label class="form-check-label" for="q{{ question.id }}d">{{ question.option_d }}</label>
+                </div>
+                
+            </div>
+            {% endfor %}
+
+            <div class="d-flex-center">
+                <button type="button" class="btn-nav" id="prevBtn"><i class="fas fa-arrow-left"></i> Previous</button>
+                <button type="button" class="btn-nav" id="nextBtn">Next <i class="fas fa-arrow-right"></i></button>
+                <button type="submit" class="btn-nav d-none" id="submitBtn"><i class="fas fa-check"></i> Submit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let duration = {{ exam_schedule.duration_minutes }} * 60;
+const timerEl = document.getElementById('timer');
+function startTimer() {
+    const interval = setInterval(() => {
+        const minutes = Math.floor(duration / 60);
+        const seconds = duration % 60;
+        timerEl.textContent = `${minutes}:${seconds.toString().padStart(2,'0')}`;
+        duration--;
+        if(duration < 0) { clearInterval(interval); alert("Time's up! Auto-submitting..."); document.getElementById('examForm').submit(); }
+    }, 1000);
+}
+window.onload = startTimer;
+
+// Pagination
+const questions = document.querySelectorAll('.question-card');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const submitBtn = document.getElementById('submitBtn');
+const progressBar = document.getElementById('progressBar');
+let current = 0;
+
+function showQuestion(index){
+    questions.forEach(q => q.classList.remove('active'));
+    questions[index].classList.add('active');
+    progressBar.style.width = `${((index+1)/questions.length)*100}%`;
+    prevBtn.style.display = index === 0 ? 'none' : 'inline-block';
+    nextBtn.style.display = index === questions.length-1 ? 'none' : 'inline-block';
+    submitBtn.classList.toggle('d-none', index !== questions.length-1);
+}
+prevBtn.addEventListener('click', ()=>{ if(current>0){ current--; showQuestion(current); } });
+nextBtn.addEventListener('click', ()=>{ if(current<questions.length-1){ current++; showQuestion(current); } });
+showQuestion(current);
+</script>
+<script>
+let duration = {{ exam_schedule.duration_minutes }} * 60; // duration in seconds
+const timerEl = document.getElementById('timer');
+const examForm = document.getElementById('examForm');
+
+function startTimer() {
+    const interval = setInterval(() => {
+        const minutes = Math.floor(duration / 60);
+        const seconds = duration % 60;
+        timerEl.textContent = `${minutes}:${seconds.toString().padStart(2,'0')}`;
+        duration--;
+
+        if (duration < 0) {
+            clearInterval(interval);
+            alert("⏰ Time's up! Your exam is being submitted automatically.");
+            examForm.submit(); // auto-submit
+        }
+    }, 1000);
+}
+
+window.onload = startTimer;
+</script>
+<script>
+  // Prevent the browser back button
+  history.pushState(null, null, location.href);
+  window.onpopstate = function () {
+    history.go(1);
+  };
+
+  // Warn before leaving
+  window.onbeforeunload = function () {
+    return "You have an ongoing exam. Are you sure you want to leave?";
+  };
+</script>
+
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+<!-- Disanable Refresh-->
+{% comment %} <script>
+  // Check if the exam has already started
+  if (sessionStorage.getItem("exam_started")) {
+    // Check if this is the second refresh attempt
+    if (sessionStorage.getItem("refresh_warning_shown")) {
+      alert("You refreshed again — your exam will now be auto-submitted!");
+      document.getElementById("examForm").submit(); // Auto-submit the exam
+    } else {
+      // First refresh attempt — show warning and set flag
+      alert("Warning: Refreshing again will auto-submit your exam!");
+      sessionStorage.setItem("refresh_warning_shown", "true");
+    }
+  } else {
+    // First page load — mark exam as started
+    sessionStorage.setItem("exam_started", "true");
+  }
+
+  // Clear flags when the user submits intentionally
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("examForm");
+    if (form) {
+      form.addEventListener("submit", () => {
+        sessionStorage.removeItem("exam_started");
+        sessionStorage.removeItem("refresh_warning_shown");
+      });
+    }
+  });
+</script> {% endcomment %}
+
+<script>
+let synth = window.speechSynthesis;
+
+function speakQuestion(text) {
+    if (synth.speaking) {
+        synth.cancel();
+    }
+
+    let utter = new SpeechSynthesisUtterance(text);
+
+    // 🇳🇬 Nigerian-like speech tuning
+    utter.rate = 0.72;     // Slightly slower
+    utter.pitch = 0.85;    // Deeper tone
+    utter.volume = 1;
+
+    // Try to pick an African or English-neutral voice
+    let voices = synth.getVoices();
+    let naijaVoice = voices.find(v =>
+        v.name.toLowerCase().includes("english") ||
+        v.name.toLowerCase().includes("africa") ||
+        v.lang === "en-NG"
+    );
+
+    if (naijaVoice) {
+        utter.voice = naijaVoice;
+    }
+
+    synth.speak(utter);
+}
+
+// Load voices on Chrome
+speechSynthesis.onvoiceschanged = function() {
+    speechSynthesis.getVoices();
+};
+</script>
+
+
+</body>
+</html>

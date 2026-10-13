@@ -1,0 +1,385 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 | Route Not Found</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-void: #0a0e17;
+            --bg-panel: #10151f;
+            --bg-panel-2: #141a26;
+            --line: #232b3a;
+            --text-dim: #6b7688;
+            --text-mid: #a3adc2;
+            --text-bright: #e8ecf5;
+            --amber: #f5a623;
+            --cyan: #5eead4;
+            --red: #ff6b6b;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg-void);
+            color: var(--text-mid);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* faint grid + vignette backdrop */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(var(--line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--line) 1px, transparent 1px);
+            background-size: 42px 42px;
+            opacity: 0.25;
+            mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 20%, transparent 75%);
+            pointer-events: none;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(94,234,212,0.06), transparent 60%);
+            pointer-events: none;
+        }
+
+        .wrap {
+            width: 100%;
+            max-width: 720px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .terminal {
+            background: var(--bg-panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(94,234,212,0.03);
+            overflow: hidden;
+        }
+
+        .terminal-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-panel-2);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot.red { background: #ff5f57; }
+        .dot.yellow { background: #febc2e; }
+        .dot.green { background: #28c840; }
+
+        .terminal-title {
+            margin-left: 8px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12.5px;
+            color: var(--text-dim);
+            letter-spacing: .02em;
+        }
+
+        .terminal-body {
+            padding: 28px 28px 32px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 14px;
+            line-height: 1.85;
+        }
+
+        .prompt-line { color: var(--text-mid); }
+        .prompt-sym { color: var(--cyan); margin-right: 6px; }
+        .cmd-text { color: var(--text-bright); }
+
+        .out-line { color: var(--text-dim); margin-left: 2px; }
+        .out-line .k { color: var(--text-mid); }
+        .status-fail { color: var(--red); font-weight: 600; }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background: var(--cyan);
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .code-block {
+            margin: 22px 0 20px;
+            display: flex;
+            align-items: baseline;
+            gap: 18px;
+        }
+
+        .error-code {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 76px;
+            font-weight: 700;
+            color: var(--amber);
+            line-height: 1;
+            letter-spacing: -.02em;
+            text-shadow: 0 0 40px rgba(245,166,35,0.25);
+        }
+
+        .error-meta {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .error-meta h1 {
+            font-size: 19px;
+            font-weight: 600;
+            color: var(--text-bright);
+            margin: 0 0 4px;
+        }
+
+        .error-meta p {
+            font-size: 13.5px;
+            color: var(--text-dim);
+            margin: 0;
+        }
+
+        .path-line {
+            background: rgba(255,107,107,0.06);
+            border: 1px solid rgba(255,107,107,0.18);
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin: 18px 0 22px;
+            font-size: 13px;
+            word-break: break-all;
+        }
+        .path-line .label {
+            color: var(--text-dim);
+            margin-right: 8px;
+        }
+        .path-line .path {
+            color: var(--red);
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 26px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-term {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13.5px;
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 11px 18px;
+            border: 1px solid var(--line);
+            background: transparent;
+            color: var(--text-mid);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: border-color .15s ease, color .15s ease, background .15s ease;
+            cursor: pointer;
+        }
+
+        .btn-term.primary {
+            background: rgba(94,234,212,0.08);
+            border-color: rgba(94,234,212,0.35);
+            color: var(--cyan);
+        }
+
+        .btn-term:hover {
+            border-color: var(--cyan);
+            color: var(--text-bright);
+            background: rgba(94,234,212,0.1);
+        }
+
+        .btn-term .sym { color: var(--amber); }
+        .btn-term.primary .sym { color: var(--cyan); }
+
+        .redirect-note {
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px dashed var(--line);
+            font-size: 12.5px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .redirect-note button {
+            background: none;
+            border: none;
+            color: var(--cyan);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12.5px;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0;
+        }
+
+        #countdown-num { color: var(--text-bright); font-weight: 600; }
+
+        @media (max-width: 520px) {
+            .error-code { font-size: 56px; }
+            .terminal-body { padding: 22px 18px 26px; font-size: 13px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .cursor { animation: none; opacity: 1; }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="wrap">
+    <div class="terminal">
+        <div class="terminal-bar">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="terminal-title">route-check — 404</span>
+        </div>
+
+        <div class="terminal-body">
+            <div class="prompt-line">
+                <span class="prompt-sym">$</span><span class="cmd-text" id="typed-cmd"></span><span class="cursor" id="type-cursor"></span>
+            </div>
+
+            <div id="scan-output" style="opacity:0;">
+                <div class="out-line">→ <span class="k">resolving route</span> ... <span class="status-fail">no match</span></div>
+                <div class="out-line">→ <span class="k">checked</span>: static routes, url patterns, redirects</div>
+                <div class="out-line">→ <span class="k">result</span>: <span class="status-fail">HTTP 404 Not Found</span></div>
+            </div>
+
+            <div class="code-block">
+                <div class="error-code">404</div>
+                <div class="error-meta">
+                    <h1>This route doesn't exist</h1>
+                    <p>The page you tried to reach isn't registered on this server.</p>
+                </div>
+            </div>
+
+            <div class="path-line">
+                <span class="label">requested:</span><span class="path" id="req-path">{{ request_path|default:"" }}</span>
+            </div>
+
+            <div class="actions">
+                <a href="{% url 'MyHome' %}" class="btn-term primary">
+                    <span class="sym">➜</span> go home
+                </a>
+                <a href="javascript:history.back()" class="btn-term">
+                    <span class="sym">←</span> go back
+                </a>
+                <a href="javascript:location.reload()" class="btn-term">
+                    <span class="sym">↻</span> retry route
+                </a>
+            </div>
+
+            <div class="redirect-note">
+                <span>auto-returning home in <span id="countdown-num">15</span>s</span>
+                <button id="cancel-redirect" type="button">cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+<script>
+(function () {
+    // Resolve the attempted path: prefer Django's request_path, fall back to JS
+    var pathEl = document.getElementById('req-path');
+    var djangoPath = pathEl.textContent.trim();
+    var attemptedPath = djangoPath || window.location.pathname || '/';
+    pathEl.textContent = attemptedPath;
+
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    var typedEl = document.getElementById('typed-cmd');
+    var cursorEl = document.getElementById('type-cursor');
+    var outputEl = document.getElementById('scan-output');
+    var command = 'diagnose ' + attemptedPath;
+
+    function showOutput() {
+        outputEl.style.opacity = '1';
+    }
+
+    if (reduceMotion) {
+        typedEl.textContent = command;
+        showOutput();
+    } else {
+        var i = 0;
+        (function type() {
+            if (i <= command.length) {
+                typedEl.textContent = command.slice(0, i);
+                i++;
+                setTimeout(type, 22);
+            } else {
+                cursorEl.style.animation = 'blink 1s step-end infinite';
+                setTimeout(showOutput, 200);
+            }
+        })();
+    }
+
+    // Auto-redirect countdown, cancellable
+    var seconds = 15;
+    var numEl = document.getElementById('countdown-num');
+    var cancelBtn = document.getElementById('cancel-redirect');
+    var noteEl = cancelBtn.closest('.redirect-note');
+    var homeUrl = document.querySelector('.btn-term.primary').getAttribute('href');
+    var timer = setInterval(function () {
+        seconds--;
+        numEl.textContent = seconds;
+        if (seconds <= 0) {
+            clearInterval(timer);
+            window.location.href = homeUrl;
+        }
+    }, 1000);
+
+    cancelBtn.addEventListener('click', function () {
+        clearInterval(timer);
+        noteEl.innerHTML = '<span>auto-redirect cancelled — take your time</span>';
+    });
+})();
+</script>
+
+</body>
+</html>

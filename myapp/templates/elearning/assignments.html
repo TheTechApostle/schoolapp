@@ -1,0 +1,191 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Assignments</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+
+body{
+background:#f1f5f9;
+font-family:system-ui;
+}
+
+/* Sidebar */
+.sidebar-col{
+border-right:1px solid #e5e7eb;
+background:white;
+min-height:100vh;
+}
+
+/* Header */
+.page-header{
+background:linear-gradient(135deg,#2563eb,#1e40af);
+color:white;
+padding:2rem;
+border-radius:18px;
+box-shadow:0 10px 40px rgba(0,0,0,.2);
+margin-bottom:2rem;
+}
+
+/* Card */
+.assignment-card{
+background:white;
+border-radius:18px;
+padding:1.5rem;
+box-shadow:0 6px 20px rgba(0,0,0,.08);
+transition:.3s;
+position:relative;
+}
+
+.assignment-card:hover{
+transform:translateY(-4px);
+}
+
+/* Status */
+.badge-status{
+position:absolute;
+top:15px;
+right:15px;
+padding:5px 14px;
+border-radius:999px;
+font-size:.75rem;
+font-weight:600;
+}
+
+.open{background:#bbf7d0;}
+.due{background:#fecaca;}
+.submitted{background:#bae6fd;}
+
+.submit-btn{
+background:linear-gradient(135deg,#2563eb,#1e40af);
+border:none;
+border-radius:12px;
+color:white;
+padding:10px 18px;
+font-weight:600;
+}
+
+.submit-btn:disabled{
+background:#9ca3af;
+}
+
+.meta{
+font-size:.85rem;
+color:#64748b;
+}
+
+.grade{
+font-weight:600;
+color:#16a34a;
+}
+
+</style>
+</head>
+
+<body>
+
+{% include "header.html" %}
+
+<div class="container-fluid">
+<div class="row">
+
+<!-- Sidebar -->
+<div class="col-md-3  p-0">
+{% include "elearning/sidebar.html" %}
+</div>
+
+<!-- Main -->
+<div class="col-md-9 py-4 px-4">
+
+<div class="page-header">
+<h4 class="fw-bold mb-1"><i class="fa fa-book-reader"></i> Assignment Dashboard</h4>
+<p class="mb-0">View, submit and track your academic tasks.</p>
+</div>
+
+<div class="row g-4">
+
+{% for assignment in assignments %}
+
+<div class="col-md-6">
+
+<div class="assignment-card">
+
+{% if assignment.is_submitted %}
+<span class="badge-status submitted">Submitted</span>
+{% elif assignment.is_due %}
+<span class="badge-status due">Due</span>
+{% else %}
+<span class="badge-status open">Open</span>
+{% endif %}
+
+<h5 class="fw-bold">{{ assignment.title }}</h5>
+
+<p class="text-muted">
+{{ assignment.description|truncatechars:120 }}
+</p>
+
+<div class="meta mb-2">
+<i class="fa fa-book-journal-whills"></i> {{ assignment.course }}<br>
+<i class="fa fa-user"></i> {{ assignment.teacher }}<br>
+<i class="fa fa-clock"></i> Due: <span class="badge badge-danger">{{ assignment.due_date|date:"M d, Y - h:m" }}</span>
+</div>
+
+{% if assignment.score %}
+<div class="grade mb-2">
+<i class="fa fa-star"></i> Grade: {{ assignment.score }}
+</div>
+{% endif %}
+
+<div class="d-flex gap-2 flex-wrap">
+
+{% if assignment.file %}
+<a href="{{ assignment.file.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+<i class="fa fa-file"></i> View Brief
+</a>
+{% endif %}
+
+{% if assignment.is_due %}
+<button class="submit-btn btn-sm" disabled>
+<i class="fa fa-lock"></i> Due
+</button>
+
+{% elif assignment.is_submitted %}
+<button class="submit-btn btn-sm" disabled>
+<i class="fa fa-check"></i> Submitted
+</button>
+
+{% else %}
+<a href="{% url 'submit_assignment' assignment.id %}" class="submit-btn btn-sm">
+<i class="fa fa-upload"></i> Submit
+</a>
+{% endif %}
+
+</div>
+
+</div>
+
+</div>
+
+{% empty %}
+
+<div class="alert alert-info">
+No assignments yet.
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+</div>
+</div>
+{% include "footer.html" %}
+</body>
+</html>

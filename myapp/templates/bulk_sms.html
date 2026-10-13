@@ -1,0 +1,328 @@
+{% load django_browser_reload %}
+{% django_browser_reload_script %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bulk SMS — Students</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body { background: #f5f6fa; }
+        .card-rounded { border-radius: 20px; }
+        .student-item:hover { background: #f5f5f5; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between">
+        <h2 class="fw-bold mb-1">Bulk SMS — Students</h2>
+        <div style="float:right">
+            <a href="{% url 'MyHome' %}" class="nav-item nav-link bg-primary text-accent-1 p-2 rounded-3">Home</a> 
+        </div>
+    </div>
+    <p class="text-muted">Filter student accounts and compose a message for bulk delivery.</p>
+
+    <div class="row mt-4">
+        <!-- LEFT: Student Filter & List -->
+        <div class="col-lg-7">
+            <div class="card card-rounded p-3 shadow-sm">
+
+                <!-- Filters -->
+                <!-- Filters -->
+                <div class="d-flex gap-2 mb-3">
+                    <input id="searchBox" type="text" class="form-control" placeholder="Search name, phone or email">
+
+                    <select id="classFilter" class="form-select">
+                        <option value="All">All Class</option>
+                        {% for s in classes %}
+                            <option value="{{ s.name|lower }}-{{ s.department.name|lower }}">{{ s.name }}-{{ s.department.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select id="departmentFilter" class="form-select">
+                        <option value="All">All Department</option>
+                        {% for d in department %}
+                            <option value="{{ d.name|lower }}">{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select id="statusFilter" class="form-select">
+                        <option value="All">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+
+
+                <div class="small text-muted mb-2">
+                    Showing <b id="countFiltered">{{ students|length }}</b> students —
+                    Selected <b id="countSelected">0</b>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                    <input type="checkbox" id="checkAll" class="me-2">
+                    <label for="checkAll" class="small fw-semibold">Select All</label>
+                </div>
+
+                <ul class="list-group" id="studentList">
+                    {% for s in students %}
+                        <li 
+                            class="list-group-item student-item d-flex align-items-center justify-content-between"
+                            data-name="{{ s.full_name }}"
+                            data-phone="{{ s.guardian_phone }}"
+                            data-email="{{ s.user.email }}"
+                            data-class="{{ s.level_or_class|lower }}"
+                            data-status="{{ s.status|default:'active' }}"
+                        >
+
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="checkbox" class="studentCheck">
+                                <div>
+                                    <div class="fw-semibold">
+                                        {{ s.full_name }} 
+                                        <span class="text-muted small">({{ s.level_or_class }})</span>
+                                    </div>
+                                    <div class="small text-muted">
+                                        <small class='text-bg-primary'>{{ s.guardian_phone }} </small>• <small class='text-primary px-2'>{{ s.user.email }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+
+                    {% endfor %}
+                </ul>
+
+            </div>
+        </div>
+
+        <!-- RIGHT: Composer -->
+        <div class="col-lg-5">
+            <div class="card card-rounded p-4 shadow-lg">
+                <h5 class="fw-bold">Compose Message</h5>
+                {% for message in messages %}
+                <p>{{message}}</p>
+                {% endfor %}
+                <label class="mt-3 small text-muted">Message</label>
+                <textarea id="messageBox" rows="6" class="form-control" placeholder="Write your message... use {name} token"></textarea>
+                <div class="d-flex gap-2 justify-content-start">
+                    <lable>Send to Email</label>
+                    <input type="radio" name="addEmails" id="addEmails" value="No">No
+                    <input type="radio" name="addEmails" id="addEmails" value="Yes">Yes
+                </div>
+                <div class="d-flex justify-content-between mt-2 small text-muted">
+                    <span id="charCount">0 characters</span>
+                    <span id="smsSegments">1 SMS</span>
+                </div>
+                
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-outline-dark w-50" data-bs-toggle="modal" data-bs-target="#previewModal">
+                        Preview
+                    </button>
+
+                    <button id="sendBtn" class="btn btn-success w-50">
+                        Send SMS
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- PREVIEW MODAL -->
+<div class="modal fade" id="previewModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content p-3">
+            <div class="modal-header">
+                <h5 class="modal-title">Message Preview</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body" id="previewBody"></div>
+
+            <div class="modal-footer">
+                <button class="btn btn-dark" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* --- DOM refs --- */
+const list = document.getElementById('studentList');
+const searchBox = document.getElementById('searchBox');
+const classFilter = document.getElementById('classFilter');
+const departmentFilter = document.getElementById('departmentFilter');
+const statusFilter = document.getElementById('statusFilter');
+const messageBox = document.getElementById('messageBox');
+const checkAll = document.getElementById('checkAll');
+const countFilteredSpan = document.getElementById('countFiltered');
+const countSelected = document.getElementById('countSelected');
+
+/* --- Helpers --- */
+function getVisibleListItems() {
+    return [...list.children].filter(li => li.style.display !== 'none');
+}
+function getAllCheckboxes() {
+    return [...document.querySelectorAll('.studentCheck')];
+}
+function updateSelectedCount() {
+    const selected = getAllCheckboxes().filter(chk => chk.checked && chk.closest('li').style.display !== 'none').length;
+    countSelected.textContent = selected;
+}
+
+/* --- Filtering --- */
+function filterStudents(){
+    const query = (searchBox.value || '').toLowerCase();
+    const cls = (classFilter.value || 'All').toLowerCase();
+    const dept = (departmentFilter.value || 'All').toLowerCase();
+    const status = (statusFilter.value || 'All').toLowerCase();
+
+    let count = 0;
+
+    [...list.children].forEach(li => {
+        const name = (li.dataset.name || '').toLowerCase();
+        const phone = (li.dataset.phone || '');
+        const email = (li.dataset.email || '').toLowerCase();
+        const studentClass = (li.dataset.class || '').toLowerCase();
+        const studentStatus = (li.dataset.status || '').toLowerCase();
+        // dept is not explicitly set on data attributes here; if you want department filtering, add data-dept="{{ s.department.name|lower }}" to each <li>
+
+        let match = true;
+
+        if (cls !== "all" && studentClass !== cls) match = false;
+        if (status !== "all" && studentStatus !== status) match = false;
+
+        if (query) {
+            if (!name.includes(query) && !phone.includes(query) && !email.includes(query)) match = false;
+        }
+
+        li.style.display = match ? "" : "none";
+        if (match) count++;
+    });
+
+    countFilteredSpan.textContent = count;
+    updateSelectedCount();
+}
+
+/* --- Character counter --- */
+function updateCharCount(){
+    const len = (messageBox.value || '').length;
+    document.getElementById('charCount').textContent = len + " characters";
+    document.getElementById('smsSegments').textContent = Math.max(1, Math.ceil(len / 160)) + " SMS";
+}
+
+/* --- Preview modal --- */
+document.getElementById('previewModal').addEventListener('show.bs.modal', () => {
+    const message = (messageBox.value || '').trim();
+    const selected = getAllCheckboxes().filter(chk => chk.checked).slice(0, 5);
+    let body = '';
+
+    selected.forEach(chk => {
+        const li = chk.closest('li');
+        const personalized = message ? message.replaceAll("{name}", li.dataset.name) : '';
+        body += `
+            <div class="border rounded p-3 mb-2">
+                <b>${li.dataset.name}</b> — ${li.dataset.phone}<br>${li.dataset.email}
+                <div class="mt-2 p-2 bg-light">${personalized}</div>
+            </div>
+        `;
+    });
+
+    if (selected.length === 0) {
+        body = "<p class='text-muted'>No students selected</p>";
+    }
+
+    document.getElementById('previewBody').innerHTML = body;
+});
+
+/* --- Send button (keeps your original fetch logic) --- */
+document.getElementById('sendBtn').addEventListener('click', async () => {
+    const message = (messageBox.value || '').trim();
+    const emailChoice = document.querySelector('input[name="addEmails"]:checked')?.value;
+
+    if (!message) return alert("Message is empty!");
+
+    const recipients = getAllCheckboxes()
+        .filter(chk => chk.checked)
+        .map(chk => {
+            const li = chk.closest('li');
+            return { name: li.dataset.name, phone: li.dataset.phone, email: li.dataset.email };
+        });
+
+    // adapt CSRF if needed; using JSON you likely require CSRF token on Django side
+    const res = await fetch("{% url 'send_bulk_sms' %}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie('csrftoken') },
+        body: JSON.stringify({ message, recipients, addEmails: emailChoice })
+    });
+
+    const data = await res.json();
+    alert("SMS sent to " + (data.count ?? recipients.length) + " students");
+});
+
+/* --- Check all --- */
+checkAll.addEventListener('change', () => {
+    getAllCheckboxes().forEach(chk => {
+        const li = chk.closest('li');
+        if (li.style.display !== 'none') chk.checked = checkAll.checked;
+    });
+    updateSelectedCount();
+});
+
+
+/* --- Make clicking a list item toggle the checkbox (but not when clicking the checkbox itself) --- */
+list.addEventListener('click', (e) => {
+    const li = e.target.closest('li');
+    if (!li) return;
+    // if clicked directly on a checkbox, do nothing (checkbox will handle it)
+    if (e.target.matches('input[type="checkbox"]')) {
+        updateSelectedCount();
+        if (!e.target.checked) checkAll.checked = false;
+        return;
+    }
+    const chk = li.querySelector('.studentCheck');
+    if (chk) {
+        chk.checked = !chk.checked;
+        updateSelectedCount();
+        if (!chk.checked) checkAll.checked = false;
+    }
+});
+
+/* --- Attach listener to existing checkboxes so clicks update counts (use event delegation above instead is enough) --- */
+/* Keep these in case you want individual handlers */
+document.addEventListener('change', (e) => {
+    if (e.target && e.target.classList && e.target.classList.contains('studentCheck')) {
+        if (!e.target.checked) checkAll.checked = false;
+        updateSelectedCount();
+    }
+});
+
+/* --- Utility: get CSRF cookie (Django fetch) --- */
+function getCookie(name) {
+    const v = document.cookie.split('; ').find(row => row.startsWith(name + '='));
+    return v ? decodeURIComponent(v.split('=')[1]) : null;
+}
+
+/* --- Wire up inputs --- */
+searchBox.addEventListener('input', filterStudents);
+classFilter.addEventListener('change', filterStudents);
+departmentFilter.addEventListener('change', filterStudents);
+statusFilter.addEventListener('change', filterStudents);
+messageBox.addEventListener('input', updateCharCount);
+
+/* --- Initial run --- */
+updateCharCount();
+filterStudents();
+</script>
+
+
+</body>
+</html>

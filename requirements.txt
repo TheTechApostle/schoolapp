@@ -1,0 +1,15 @@
+pymysql
+django<5.1
+django-suit
+django-widget-tweaks
+django-jazzmin
+Pillow
+django-browser-reload
+python-dotenv
+PyPDF2 
+python-docx 
+pypdf 
+openai
+requests
+wikipedia
+python-dotenv

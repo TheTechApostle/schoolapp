@@ -1,0 +1,194 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tech Courses</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+
+body{
+background:#f1f5f9;
+font-family:system-ui;
+}
+
+.sidebar-col{
+border-right:1px solid #e5e7eb;
+background:white;
+min-height:100vh;
+}
+
+.page-header{
+background:linear-gradient(135deg,#2563eb,#1e40af);
+color:white;
+padding:2rem;
+border-radius:18px;
+box-shadow:0 10px 40px rgba(0,0,0,.2);
+margin-bottom:2rem;
+}
+
+.course-card{
+background:white;
+border-radius:18px;
+padding:1.5rem;
+box-shadow:0 6px 20px rgba(0,0,0,.08);
+transition:.3s;
+position:relative;
+}
+
+.course-card:hover{
+transform:translateY(-4px);
+}
+
+.badge-status{
+position:absolute;
+top:15px;
+right:15px;
+padding:5px 14px;
+border-radius:999px;
+font-size:.75rem;
+font-weight:600;
+}
+
+.active{background:#bbf7d0;}
+.inactive{background:#fecaca;}
+
+.meta{
+font-size:.85rem;
+color:#64748b;
+}
+
+.price{
+font-weight:600;
+color:#16a34a;
+}
+
+</style>
+</head>
+
+<body>
+
+{% include "header.html" %}
+
+<div class="container-fluid">
+<div class="row">
+
+<div class="col-md-3 p-0">
+{% include "elearning/sidebar.html" %}
+</div>
+
+<div class="col-md-9 py-4 px-4">
+
+<div class="page-header">
+<h4 class="fw-bold mb-1">
+<i class="fa fa-laptop-code"></i> Tech Courses
+</h4>
+<p class="mb-0">Explore available tech programs and enroll instantly.</p>
+</div>
+
+<!-- CATEGORY TABS -->
+<ul class="nav nav-pills mb-4 gap-2">
+
+<li class="nav-item">
+<a class="nav-link {% if not active_category %}active{% endif %}"
+href="{% url 'techcourse_list' %}">
+All
+</a>
+</li>
+
+{% for cat in categories %}
+<li class="nav-item">
+<a class="nav-link {% if active_category == cat.id|stringformat:'s' %}active{% endif %}"
+href="?category={{ cat.id }}">
+{{ cat.name }}
+</a>
+</li>
+{% endfor %}
+
+</ul>
+
+<div class="row g-4">
+
+{% for course in techcourses %}
+
+<div class="col-md-6">
+
+<div class="course-card">
+
+{% if course.is_active %}
+<span class="badge-status active">Active</span>
+{% else %}
+<span class="badge-status inactive">Inactive</span>
+{% endif %}
+
+<h5 class="fw-bold">{{ course.title }}</h5>
+
+<p class="text-muted">
+{{ course.description|truncatechars:120 }}
+</p>
+
+<div class="meta mb-2">
+<i class="fa fa-clock"></i> {{ course.duration }}<br>
+<i class="fa fa-money-bill"></i> <span class="price">{{ course.price }}</span>
+</div>
+
+<a href="{% url 'techcourse_detail' course.id %}" class="btn btn-outline-primary btn-sm">
+<i class="fa fa-eye"></i> View Details
+</a>
+
+</div>
+
+</div>
+
+{% empty %}
+<div class="alert alert-info">No tech courses available.</div>
+{% endfor %}
+
+</div>
+
+<!-- PAGINATION -->
+{% if techcourses.has_other_pages %}
+<nav class="mt-4">
+<ul class="pagination">
+
+{% if techcourses.has_previous %}
+<li class="page-item">
+<a class="page-link" href="?page={{ techcourses.previous_page_number }}{% if active_category %}&category={{ active_category }}{% endif %}">
+Prev
+</a>
+</li>
+{% endif %}
+
+{% for i in techcourses.paginator.page_range %}
+<li class="page-item {% if techcourses.number == i %}active{% endif %}">
+<a class="page-link" href="?page={{ i }}{% if active_category %}&category={{ active_category }}{% endif %}">
+{{ i }}
+</a>
+</li>
+{% endfor %}
+
+{% if techcourses.has_next %}
+<li class="page-item">
+<a class="page-link" href="?page={{ techcourses.next_page_number }}{% if active_category %}&category={{ active_category }}{% endif %}">
+Next
+</a>
+</li>
+{% endif %}
+
+</ul>
+</nav>
+{% endif %}
+
+</div>
+
+</div>
+</div>
+
+{% include "footer.html" %}
+
+</body>
+</html>

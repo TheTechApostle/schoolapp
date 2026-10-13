@@ -1,0 +1,59 @@
+
+{% comment %} {% load exam_extras %} {% endcomment %}
+{% load static %}
+{% include "nav.html" %}
+
+<div class="container mt-4">
+  <div class="card shadow-lg border-0">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h3 class="fw-bold text-dark mb-0">
+            <i class="fa fa-scroll me-2"></i>
+        
+            {% if exam.class_groups %}
+                ({{ exam.class_groups.name }})
+            {% endif %}
+        </h3>
+
+      <a href="{% url 'Teacherdashboard' %}" class="btn btn-light btn-sm">← Back to Dashboard</a>
+    </div>
+
+    <div class="card-body">
+      {% if students %}
+        <table class="table table-striped table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th>#</th>
+              <th>Full Name</th>
+              <th>Class</th>
+              <th>Gender</th>
+              <th>Admission No.</th>
+              <th class="bg-green text-center">Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in students %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ student.full_name }}</td>
+              <td>{{ student.level_or_class }}</td>
+              <td>{{ student.gender }}</td>
+              <td>{{ student.admission_number }}</td>
+              <td class="text-center">
+                
+                  <a href="{% url 'student_score' student.id course.id %}" class="text-info" title="Score">
+                    <i class="fa fa-pen-square"></i>
+                  </a>
+              </td> 
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="alert alert-warning text-center">
+          No students found for this class.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+

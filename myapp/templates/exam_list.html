@@ -1,0 +1,48 @@
+<div class="list-group shadow-sm rounded">
+  
+  {% for exam in exams %}
+
+    {% if exam.status == "ongoing" %}
+      <a href="{% url 'take_exam' exam.course_name.id %}?term={{exam.term}}" 
+         class="list-group-item list-group-item-action d-flex justify-content-between align-items-center border-success">
+        <div>
+          <i class="fas fa-file-alt me-2 text-success"></i>
+          <strong>{{ exam.exam.title }}</strong> - {{ exam.course_name.title }}
+          <div class="text-muted small">
+            Duration: {{ exam.duration_minutes }} mins | {{ exam.term }}
+          </div>
+        </div>
+        <span class="badge bg-success text-white rounded-pill">{{ exam.scheduled_date|date:"M d, Y" }}</span>
+      </a>
+
+    {% elif exam.status == "upcoming" %}
+      <div class="list-group-item d-flex justify-content-between align-items-center border-info">
+        <div>
+          <i class="fas fa-clock me-2 text-info"></i>
+          {{ exam.exam.title }} - {{ exam.course_name.title }}
+          <div class="text-muted small">
+            Starts {{ exam.scheduled_date|date:"M d, Y" }} at {{ exam.start_time|time:"H:i" }}
+          </div>
+        </div>
+        <span class="badge bg-info text-white rounded-pill">Upcoming</span>
+      </div>
+
+    {% else %}
+      <div class="list-group-item disabled d-flex justify-content-between align-items-center border-secondary">
+        <div>
+          <i class="fas fa-check-circle me-2 text-secondary"></i>
+          {{ exam.exam.title }} - {{ exam.course_name.title }}
+          <div class="text-muted small">
+            Completed on {{ exam.scheduled_date|date:"M d, Y" }}
+          </div>
+        </div>
+        <span class="badge bg-secondary rounded-pill">Completed</span>
+      </div>
+
+    {% endif %}
+
+  {% empty %}
+    <p class="text-muted text-center py-3">No exams scheduled for this term.</p>
+  {% endfor %}
+
+</div>

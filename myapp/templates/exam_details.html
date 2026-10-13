@@ -1,0 +1,991 @@
+
+
+{% load exam_extras %}
+{% load static %}
+{% include "nav.html" %}
+<div class="d-flex flex-column flex-lg-row min-vh-100 bg-light" id="dashboard">
+
+  <!-- ===== SIDEBAR ===== -->
+ <!-- Sidebar Toggle Button (Visible only on small screens) -->
+<button class="btn btn-default btn-outline-light text-white d-lg-none position-fixed top-0 start-0 m-2 z-3" id="sidebarToggle">
+  <i class="fa fa-arrow-right"></i>
+</button>
+
+<!-- Sidebar -->
+<aside class="sidebar d-flex flex-column justify-content-between p-3 text-white" id="sidebarMenu">
+  <div>
+    
+    <div class="d-flex align-items-center mb-4">
+      <button class="btn btn-default btn-outline-light text-white d-lg-none top-0 start-0 m-1 z-3" id="xsidebarToggle">
+        <i class="fa fa-arrow-left"></i>
+      </button>
+      <i class="fa fa-graduation-cap text-warning fs-3"></i>
+      <h4 class="ms-2 fw-bold mb-0 text-white">Teacher Panel</h4>
+    </div>
+    <hr class="divider">
+
+    <h6 class="text-uppercase text-white fw-semibold mb-2">My Courses & Exams</h6>
+   <ul class="nav flex-column mt-2" id="course-list">
+      {% for e in exams %}
+        <li class="nav-item" style="font-size:14px">
+          <a href="{% url 'exam_detail' e.id %}" class="nav-link course-link px-3 py-2 rounded d-flex align-items-center">
+            <i class="fa fa-book me-2 text-warning"></i>
+            <span>{{ e.display_title }}</span>
+          </a>
+        </li>
+        <hr width="80%" style="border:1px solid lightgray" class="text-center"/>
+      {% empty %}
+        <li class="nav-item text-muted ps-2 mt-2">No courses or exams assigned.</li>
+      {% endfor %}
+    </ul>
+
+  </div>
+
+  <div class="mt-4">
+    <hr class="divider">
+    <button id="themeToggle" class="btn btn-theme w-100">
+      <i class="fa fa-moon me-1"></i> Dark Mode
+    </button>
+  </div>
+</aside>
+
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="flex-fill p-4 main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold text-primary mb-0">
+        <i class="fa fa-scroll me-2"></i> 
+        {% comment %} {{ exam.title|clean_exam_title:exam.class_groups.name }} {% endcomment %}
+        {{ exam.title}}
+
+      </h3>
+      <a href="{% url 'Teacherdashboard' %}" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+        <i class="fa fa-arrow-left me-1"></i> Back
+      </a>
+    </div>
+
+    <!-- ===== Exam Overview ===== -->
+    <div class="card-glass p-4 mb-4">
+      <h5 class="fw-semibold text-dark mb-3">📘 Exam Overview</h5>
+      <div class="row g-3">
+        <div class="col-md-6 text-dark">
+          <p><strong class="text-primary">Course:</strong> {{ exam.course.title }}</p>
+          <p><strong class="text-primary">Date Created:</strong> {{ exam.date_created|date:"d M, Y" }}</p>
+        </div>
+        <div class="col-md-6 text-dark">
+          <p><strong class="text-primary">Total Questions:</strong> {{ exam.questions.count }}</p>
+          <p><strong class="text-primary">Created By:</strong> {{ exam.created_by.get_full_name|default:exam.created_by.username }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Action Buttons ===== -->
+    <div class="d-flex gap-2 flex-wrap mb-4">
+      <a href="{% url 'add_questions' exam.id %}" class="btn btn-primary rounded-pill shadow-sm px-4">
+        <i class="fa fa-plus me-1"></i> Add Questions
+      </a>
+
+      <a href="#previewExamModal" 
+        class="btn btn-success rounded-pill shadow-sm px-4" 
+        data-bs-toggle="modal" 
+        data-bs-target="#previewExamModal">
+        <i class="fa fa-eye me-1"></i> Preview Exam
+      </a>
+
+
+      <!-- ✅ Modal Button -->
+      <button type="button" class="btn btn-warning rounded-pill shadow-sm px-4 text-dark"
+              data-bs-toggle="modal" data-bs-target="#scheduleExamModal">
+        <i class="fa fa-calendar"></i> Schedule Exam
+      </button>
+
+      <!-- My Students Button -->
+      {% comment %} <a href="#" class="btn btn-info rounded-pill shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#studentsModal">
+        <i class="fa fa-user me-1"></i> My Students
+      </a> {% endcomment %}
+      <a href="#" 
+        class="btn btn-info rounded-pill shadow-sm px-4 view-students-btn" 
+        data-bs-toggle="modal" 
+        data-bs-target="#studentsModal"
+        data-class-id="{{ class_group.id }}"
+        data-course-id="{{ course.id }}">
+        <i class="fa fa-user me-1"></i> My Students
+      </a>
+
+      <a href="#" class="btn btn-info rounded-pill shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#publishModal">
+        <i class="fa fa-upload me-1"></i> Publish
+      </a>
+
+    </div>
+
+    <!-- ===== Questions Section ===== -->
+<!-- ===== Questions Section ===== -->
+<div>
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h5 class="fw-bold text-primary mb-0">🧠 Questions</h5>
+
+    <!-- Term Filter Buttons -->
+    <div class="d-flex flex-wrap gap-2" id="termFilterBtns">
+      <b>Filter Questions by</b><br/>
+      <button class="btn btn-sm btn-primary rounded-pill term-filter active" data-term="all">
+        All
+      </button>
+      <button class="btn btn-sm btn-outline-secondary rounded-pill term-filter" data-term="First Term">
+        First Term
+      </button>
+      <button class="btn btn-sm btn-outline-secondary rounded-pill term-filter" data-term="Second Term">
+        Second Term
+      </button>
+      <button class="btn btn-sm btn-outline-secondary rounded-pill term-filter" data-term="Third Term">
+        Third Term
+      </button>
+      <button class="btn btn-sm btn-outline-secondary rounded-pill term-filter" data-term="no-term">
+        No Term
+      </button>
+    </div>
+  </div>
+
+  <!-- Question count indicator -->
+  <p class="text-muted small mb-3" id="questionCount"></p>
+
+  {% if exam.questions.all %}
+    {% for question in exam.questions.all %}
+      <div class="question-card shadow-sm p-4 mb-3 text-dark"
+           data-term="{{ question.term|default:'no-term' }}">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <strong class="question-number">Q{{ forloop.counter }}:</strong>
+          </div>
+          <div>
+            {% if question.term %}
+              <span class="badge bg-dark">{{ question.term }}</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">No Assigned Term</span>
+            {% endif %}
+            <button type="button"
+                    class="btn btn-sm btn-outline-primary ms-2"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editQuestionModal"
+                    data-id="{{ question.id }}"
+                    data-text="{{ question.question_text|striptags }}"
+                    data-a="{{ question.option_a|safe }}"
+                    data-b="{{ question.option_b|safe }}"
+                    data-c="{{ question.option_c|safe }}"
+                    data-d="{{ question.option_d|safe }}"
+                    data-answer="{{ question.correct_answer }}"
+                    data-term="{{ question.term }}">
+              <i class="fa fa-edit"></i>
+            </button>
+          </div>
+        </div>
+        <div>{{ question.question_text|safe }}</div>
+        <ul class="list-unstyled mt-2">
+          <li class="option-item {% if question.correct_answer == 'A' %}correct{% endif %}">A. {{ question.option_a }}</li>
+          <li class="option-item {% if question.correct_answer == 'B' %}correct{% endif %}">B. {{ question.option_b }}</li>
+          <li class="option-item {% if question.correct_answer == 'C' %}correct{% endif %}">C. {{ question.option_c }}</li>
+          <li class="option-item {% if question.correct_answer == 'D' %}correct{% endif %}">D. {{ question.option_d }}</li>
+        </ul>
+      </div>
+    {% endfor %}
+
+    <div id="noResultsMsg" class="alert alert-secondary d-none">
+      No questions found for the selected term.
+    </div>
+  {% else %}
+    <div class="alert alert-secondary">No questions added yet for this exam.</div>
+  {% endif %}
+</div>
+
+</main>
+</div>
+<!--  Edit here-->
+<div class="modal fade" id="editQuestionModal" tabindex="-1" aria-labelledby="editQuestionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="editQuestionForm" method="POST" action="{% url 'edit_question' %}">
+        {% csrf_token %}
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="editQuestionModalLabel">Edit Question</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="question_id" id="question_id">
+
+          <div class="mb-3 text-dark">
+            <label class="form-label"><b>Question Text</b></label>
+            <b><textarea style='border:2px solid #6ba5f1ff' name="question_text" id="question_text" class="form-control" rows="3" required></textarea></b>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <label class="form-label text-dark">Option A</label>
+              <input type="text" name="option_a" id="option_a" class="form-control" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label class="form-label text-dark">Option B</label>
+              <input type="text" name="option_b" id="option_b" class="form-control" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label class="form-label text-dark">Option C</label>
+              <input type="text" name="option_c" id="option_c" class="form-control" required>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label class="form-label text-dark">Option D</label>
+              <input type="text" name="option_d" id="option_d" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-dark">Correct Answer</label>
+            <select name="correct_answer" id="correct_answer" class="form-select" required>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-dark">Term</label>
+            <small class="text-danger">First Term, Second Term, Third Term</small>
+            <input type="text" name="term" id="term" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- End Here-->
+<!-- ===== MODAL (Schedule Exam) ===== -->
+<div class="modal fade" id="scheduleExamModal" tabindex="-1" aria-labelledby="scheduleExamModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content shadow-lg border-0 rounded-4">
+
+      <!-- Header -->
+      <div class="modal-header text-white" style="background: linear-gradient(90deg, #f59e0b, #fbbf24, #fde68a);">
+        <h5 class="modal-title fw-bold" id="scheduleExamModalLabel">
+          <i class="fa fa-calendar-alt me-2"></i> Schedule Exam
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 bg-light">
+        <form id="scheduleExamForm" method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="exam_id" value="{{ exam.id }}">
+
+          <div class="row g-4">
+            <!-- Department -->
+            <div class="col-md-6">
+              <label class="form-label text-dark fw-semibold">Department</label>
+              <input type="text"
+                     class="form-control  border-0 shadow-sm"
+                     name="department_name"
+                     value="{{ department.name }}"
+                     readonly>
+              <input type="hidden" name="department_id" value="{{ department.id }}">
+            </div>
+
+            <!-- Class Group -->
+            <div class="col-md-4">
+              <label class="form-label text-dark fw-semibold">Class Group</label>
+              <input type="text"
+                     class="form-control  border-0 shadow-sm"
+                     name="classgroup_name"
+                     value="{{ classgroup.name }}"
+                     readonly>
+              <input type="hidden" name="classgroup_id" value="{{ classgroup.id }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-dark fw-semibold">Course / Subject</label>
+              <input type="text"
+                     class="form-control  border-0 shadow-sm"
+                     name="course_name"
+                     value="{{ course }}"
+                     readonly>
+              <input type="hidden" name="course_id" value="{{ course.id }}">
+            </div>
+
+            <!-- Exam Date -->
+            <div class="col-md-4">
+              <label class="form-label text-dark fw-semibold">Exam Date</label>
+              <input type="date"
+                      id="scheduled_date"
+                     name="scheduled_date"
+                     class="form-control  border-0 shadow-sm"
+                     required>
+            </div>
+
+            <!-- Start Time -->
+            <div class="col-md-4">
+              <label class="form-label text-dark fw-semibold">Start Time</label>
+              <input type="time"
+                    id="start_time"
+                     name="start_time"
+                     class="form-control  border-0 shadow-sm"
+                     required>
+            </div>
+
+            <!-- Duration -->
+            <div class="col-md-4">
+              <label class="form-label text-dark fw-semibold">Duration (minutes)</label>
+              <input type="number"
+                     name="duration_minutes"
+                     class="form-control  border-0 shadow-sm"
+                     min="10"
+                     required>
+            </div>
+
+            <!-- Total Questions -->
+            <div class="col-md-4">
+              <label class="form-label text-dark fw-semibold">Total Questions</label>
+              <input type="number"
+                     name="total_questions"
+                     class="form-control  border-0 shadow-sm"
+                     min="1"
+                     required>
+            </div>
+
+            <!-- Term / Semester -->
+            <div class="col-md-4">
+              <label class="form-label text-dark fw-semibold">Term / Semester</label>
+              <select name="term" class="form-select  shadow-sm" required>
+                <option value="" disabled selected>--Select--</option>
+                <option value="First Term">First Term</option>
+                <option value="Second Term">Second Term</option>
+                <option value="Third Term">Third Term</option>
+                <option value="First Semester">First Semester</option>
+                <option value="Second Semester">Second Semester</option>
+                <option value="Third Semester">Third Semester</option>
+              </select>
+            </div>
+            <div class="col-lg-3">
+              <label class="form-label">Choose Session</label>
+                <select name="session" class="form-select  shadow-sm" required>
+                {% for session_ in getSession %}
+                <option value="{{session_.id}}">{{session_.name}}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="text-end mt-4">
+            <button type="submit" class="btn btn-warning px-5 py-2 rounded-pill shadow-sm text-dark fw-semibold">
+              <i class="fa fa-paper-plane me-1"></i> Schedule Now
+            </button>
+          </div>
+        </form>
+      </div>
+    <div class="">
+      {% if schedules %}
+    <h5 class="mt-3">Scheduled Exams</h5>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Department</th>
+                <th>Class</th>
+                <th>Course</th>
+                <th>Term</th>
+                <th>Session</th>
+                <th>Date</th>
+                <th>Start Time</th>
+                <th>Duration (mins)</th>
+                <th>Total Questions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sched in schedules %}
+                <tr>
+                    <td>{{ sched.department.name }}</td>
+                    <td>{{ sched.class_level.name }}</td>
+                    <td>{{ sched.course_name.title }}</td>
+                    <td>{{ sched.term }}</td>
+                    <td>{{ sched.session }}</td>
+                    <td>{{ sched.scheduled_date }}</td>
+                    <td>{{ sched.start_time }}</td>
+                    <td>{{ sched.duration_minutes }}</td>
+                    <td>{{ sched.total_questions }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="text-muted">No schedules available for this exam yet.</p>
+{% endif %}
+
+    </div>
+    </div>
+  </div>
+</div>
+<!-- ===== EXAM PREVIEW MODAL ===== -->
+<!-- ===== EXAM PREVIEW MODAL ===== -->
+<!-- ================= Preview Exam Modal ================= -->
+<!-- ✅ Exam Preview Modal -->
+<div class="modal fade" id="previewExamModal" tabindex="-1" aria-labelledby="previewExamLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+
+      <!-- ===== Modal Header with Gradient Blue ===== -->
+      <div class="modal-header text-white" style="background: linear-gradient(90deg, #007BFF, #00C6FF);">
+        <h5 class="modal-title text-dark fw-bold" id="previewExamLabel">
+          <i class="fa fa-eye me-2"></i>Preview Exam — {{ exam.title }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- ===== Modal Body ===== -->
+      <div class="modal-body p-4">
+        {% if schedule %}
+          <div class="mb-4 p-3 bg-light rounded-3 shadow-sm">
+            <div class="d-flex text-dark flex-wrap gap-3 align-items-center">
+              <span><i class="fa fa-calendar me-1 text-primary"></i> <strong>Date:</strong> {{ schedule.scheduled_date|date:"F j, Y" }}</span>
+              <span><i class="fa fa-clock me-1 text-primary"></i> <strong>Time:</strong> {{ schedule.start_time|time:"h:i A" }}</span>
+              <span><i class="fa fa-hourglass-half me-1 text-primary"></i> <strong>Duration:</strong> {{ schedule.duration_minutes }} mins</span>
+              <span><i class="fa fa-layer-group me-1 text-primary"></i> <strong>Term:</strong> {{ schedule.term }}</span>
+            </div>
+
+            <!-- Countdown Timer -->
+            <div class="mt-3">
+              <h6 class="fw-semibold text-secondary mb-1">Exam Starts In:</h6>
+              <div id="countdown-timer" class="fw-bold fs-5 text-primary"></div>
+            </div>
+          </div>
+        {% else %}
+          <div class="alert alert-warning">No schedule set for this exam yet.</div>
+        {% endif %}
+
+        <!-- ===== Questions Section ===== -->
+        <div>
+          <h6 class="fw-bold mb-3 text-secondary">Exam Questions</h6>
+          {% if questions %}
+            {% for question in questions %}
+              <div class="border-start border-3 border-primary ps-3 mb-4">
+                <p class="fw-semibold mb-2">
+                  <b style='color:#0000ff;'>Q{{ forloop.counter }}. </b> <font class="text-dark">{{ question.question_text|safe }}</font>
+                </p>
+                <ul class="list-unstyled mb-0 text-dark">
+                  <li class="{% if question.correct_answer == 'A' %}bg-success-gradient bg-opacity-10 border border-none rounded px-2{% endif %}">
+                    A. {{ question.option_a }}
+                    {% if question.correct_answer == 'A' %}
+                      <span class="badge bg-success-gradient ms-2"><i class="fa fa-check"></i> Correct</span>
+                    {% endif %}
+                  </li>
+                  <li class="{% if question.correct_answer == 'B' %}bg-success-gradient  bg-opacity-10 border border-none rounded px-2{% endif %}">
+                    B. {{ question.option_b }}
+                    {% if question.correct_answer == 'B' %}
+                      <span class="badge bg-success ms-2"><i class="fa fa-check"></i>Correct</span>
+                    {% endif %}
+                  </li>
+                  <li class="{% if question.correct_answer == 'C' %}bg-success-gradient  bg-opacity-10 border border-none rounded px-2{% endif %}">
+                    C. {{ question.option_c }}
+                    {% if question.correct_answer == 'C' %}
+                      <span class="badge bg-success ms-2"><i class="fa fa-check"></i> Correct</span>
+                    {% endif %}
+                  </li>
+                  <li class="{% if question.correct_answer == 'D' %}bg-success-gradient bg-opacity-10 border border-none rounded px-2{% endif %}">
+                    D. {{ question.option_d }}
+                    {% if question.correct_answer == 'D' %}
+                      <span class="badge bg-success-gradient  ms-2"><i class="fa fa-check"></i>Correct</span>
+                    {% endif %}
+                  </li>
+                </ul>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-muted fst-italic">No questions have been added to this exam yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ===== Modal Footer ===== -->
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+          <i class="fa fa-times me-1"></i> Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+<!-- My Students Modal -->
+<!-- My Students Modal -->
+<div class="modal fade" id="studentsModal" tabindex="-1" aria-labelledby="studentsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title" id="studentsModalLabel">
+          <i class="fa fa-users me-2"></i>
+          Students Registered for {{ course.title }} — {{ classgroup.name }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        {% if students %}
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle small">
+            <thead class="table-info">
+              <tr>
+                <th>Photo</th>
+                <th>Full Name</th>
+                <th>Admission No.</th>
+                <th>Gender</th>
+                <th>Department</th>
+                <th>Class</th>
+                <th>Date Joined</th>
+                <th colspan="2" class="text-center bg-light">Action</th>
+                <th class="bg-light text-center">Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for student in students %}
+              <tr>
+                <td>
+                  <img 
+                      src="{{ student.profile_picture.url|default:'/static/img/hero.jpeg' }}" 
+                      width="45" height="45" 
+                      class="rounded-circle border">
+
+                </td>
+                <td>{{ student.full_name }}</td>
+                <td>{{ student.admission_number }}</td>
+                <td>{{ student.gender }}</td>
+                <td>{{ student.department.name }}</td>
+                <td>{{ student.level_or_class|default:"-" }}</td>
+                <td>{{ student.date_joined|date:"M d, Y" }}</td>
+                <td>
+                  <a href="#" class="text-primary" title="View"><i class="fa fa-eye"></i></a>
+                </td>
+                <td>
+                  <a href="#" class="text-danger" title="Remove"><i class="fa fa-trash"></i></a>
+                </td>
+                <td class="text-center">
+                  <a href="{% url 'student_score' student.id course.id %}" class="text-info" title="Score">
+                    <i class="fa fa-pen-square"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="alert alert-warning text-center mb-0">
+          <i class="fa fa-info-circle me-2"></i>
+          No students have registered for <strong>{{ course.title }}</strong> in {{ classgroup.name }} yet.
+          If you can't find your students due to published exam  <a href="{% url 'myStudent' classgroup.id course.id %}">Click Here</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Publish Exam Modal -->
+<div class="modal fade" id="publishModal" tabindex="-1" aria-labelledby="publishModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0 rounded-4">
+      
+      <!-- Modal Header -->
+      <div class="modal-header bg-info text-white rounded-top-4">
+        <h5 class="modal-title" id="publishModalLabel">
+          <i class="fa fa-upload me-2"></i> Publish Exam Questions
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <form id="publishForm" method="POST" data-url="{% url 'publish_exam' exam.id %}">
+          {% csrf_token %}
+
+          <p class="mb-3">
+            Select the <strong>Class Groups</strong> you want to publish 
+            <span class="text-primary fw-bold">{{ exam.title }}</span> questions to:
+          </p>
+
+          <div class="form-group mb-3">
+            <label for="classGroups" class="form-label fw-semibold">Choose Class Groups</label>
+            <select id="classGroups" name="class_groups" class="form-select" multiple required>
+              {% for group in all_classgroups %}
+                {% if group != exam.class_groups %}
+                  <option value="{{ group.id }}">{{ group.name }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+            <small class="text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</small>
+          </div>
+
+          <div class="alert alert-warning small rounded-3">
+            <i class="fa fa-exclamation-triangle me-2"></i>
+            This will copy all questions from <strong>{{ exam.class_groups.name }}</strong> to the selected class groups.
+          </div>
+
+          <div class="text-end">
+            <button type="submit" class="btn btn-info rounded-pill shadow-sm px-4">
+              <i class="fa fa-paper-plane me-1"></i> Publish Now
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  $("#publishForm").submit(function(e) {
+    e.preventDefault();
+
+    const url = $(this).data("url");
+    const formData = $(this).serialize();
+
+    $.ajax({
+      type: "POST",
+      url: url,
+      data: formData,
+      beforeSend: function() {
+        $("#publishForm button[type='submit']").prop("disabled", true).html("<i class='fa fa-spinner fa-spin me-1'></i> Publishing...");
+      },
+      success: function(response) {
+        // Close modal
+        $("#publishModal").modal("hide");
+
+        // Show success alert
+        $("body").append(`
+          <div class="alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3 shadow" style="z-index: 2000;">
+            <i class="fa fa-check-circle me-2"></i> ${response.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        `);
+      },
+      error: function(xhr) {
+        alert("An error occurred while publishing. Please try again.");
+      },
+      complete: function() {
+        $("#publishForm button[type='submit']").prop("disabled", false).html("<i class='fa fa-paper-plane me-1'></i> Publish Now");
+      }
+    });
+  });
+});
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Theme toggle
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    themeToggle.innerHTML = isDark
+      ? '<i class="fa fa-sun me-1"></i> Light Mode'
+      : '<i class="fa fa-moon me-1"></i> Dark Mode';
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+    themeToggle.innerHTML = '<i class="fa fa-sun me-1"></i> Light Mode';
+  }
+
+  // Handle form submit
+  const form = document.getElementById('scheduleExamForm');
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  // Check form validity before sending
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  const formData = new FormData(form);
+
+  fetch("{% url 'schedule_exam' exam.id %}", {
+    method: 'POST',
+    headers: { 'X-CSRFToken': formData.get('csrfmiddlewaretoken') },
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log('Department ID:', $('[name="department_id"]').val()); // Log before reload
+    console.log('term ID:', $('[name="term"]').val()); // Log before reload
+    console.log('Start ID:', $('[name="start_time"]').val()); // Log before reload
+    console.log('department_name:', $('[name="department_name"]').val()); // Log before 
+    console.log('classgroup_name:', $('[name="classgroup_name"]').val()); // Log before reload
+    alert(data.message);
+
+    if (data.status === 'success') {
+      // Hide modal
+      bootstrap.Modal.getInstance(document.getElementById('scheduleExamModal')).hide();
+      // Reload page after modal hidden
+      location.reload();
+    }
+  })
+  .catch(err => console.error(err));
+});
+
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const dateInput = document.getElementById("scheduled_date");
+  const timeInput = document.getElementById("start_time");
+
+  // 🕒 Set today's date as the minimum allowed
+  const today = new Date().toISOString().split("T")[0];
+  dateInput.min = today;
+
+  // 🧩 Whenever the date changes, validate time
+  dateInput.addEventListener("change", function () {
+    validateDateTime();
+  });
+
+  timeInput.addEventListener("change", function () {
+    validateDateTime();
+  });
+
+  function validateDateTime() {
+    const selectedDate = new Date(dateInput.value);
+    const now = new Date();
+
+    // If date is today, ensure time is in the future
+    if (selectedDate.toDateString() === now.toDateString()) {
+      const [hours, minutes] = timeInput.value.split(":").map(Number);
+      const selectedTime = new Date();
+      selectedTime.setHours(hours, minutes, 0, 0);
+
+      if (selectedTime < now) {
+        alert("⚠️ You cannot select a past time today!");
+        timeInput.value = "";
+      }
+    }
+  }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const editModal = document.getElementById('editQuestionModal');
+  editModal.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+
+    // Get data attributes
+    const id = button.getAttribute('data-id');
+    const text = button.getAttribute('data-text');
+    const a = button.getAttribute('data-a');
+    const b = button.getAttribute('data-b');
+    const c = button.getAttribute('data-c');
+    const d = button.getAttribute('data-d');
+    const answer = button.getAttribute('data-answer');
+    const term = button.getAttribute('data-term');
+
+    // Fill form fields
+    editModal.querySelector('#question_id').value = id;
+    editModal.querySelector('#question_text').value = text;
+    editModal.querySelector('#option_a').value = a;
+    editModal.querySelector('#option_b').value = b;
+    editModal.querySelector('#option_c').value = c;
+    editModal.querySelector('#option_d').value = d;
+    editModal.querySelector('#correct_answer').value = answer;
+    editModal.querySelector('#term').value = term;
+    var questionText = button.data('text'); // e.g. "What is motion?"
+  
+  // Insert bold text into the modal
+    
+  });
+});
+</script>
+
+{% if schedule %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const date = "{{ schedule.scheduled_date|date:'Y-m-d' }}";
+  const time = "{{ schedule.start_time|time:'H:i:s' }}";
+  const startDateTime = new Date(`${date}T${time}`);
+
+  function updateTimer() {
+    const now = new Date();
+    const diff = startDateTime - now;
+
+    if (diff <= 0) {
+      document.getElementById("countdown-timer").innerHTML = "<span class='text-success'>Exam Started!</span>";
+      clearInterval(timer);
+      return;
+    }
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    document.getElementById("countdown-timer").innerHTML =
+      `${hours}h ${minutes}m ${seconds}s`;
+  }
+
+  updateTimer();
+  const timer = setInterval(updateTimer, 1000);
+});
+</script>
+{% endif %}
+
+
+<style>
+  .list-group-item {
+  transition: 0.3s;
+}
+.list-group-item.bg-success {
+  font-weight: bold;
+  border-radius: 6px;
+}
+.bg-success-gradient {
+  background: linear-gradient(135deg, #f1f3f8ff, #bbc0eeff);
+  color: blue; /* makes text visible */
+  border:none;
+}
+
+.modal-backdrop.show { opacity: 0.6 !important; }
+.modal { z-index: 1055 !important; }
+.sidebar { background: #111827; width: 270px; color: white; }
+.course-link { color: #ddd; transition: 0.3s; }
+.course-link:hover { background: rgba(255,255,255,0.1); transform: translateX(5px); }
+.card-glass { background: rgba(255,255,255,0.25); border-radius: 16px; backdrop-filter: blur(15px); }
+.option-item.correct { background: #d1fae5 !important; color: #065f46; font-weight: 600; }
+.dark-mode { background: #0f172a !important; color: #e2e8f0 !important; }
+/* Sidebar layout */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 270px;
+  background-color: #09172bff;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+/* Main content alignment */
+.main-content {
+  margin-left: 270px; /* Space for sidebar */
+  transition: margin-left 0.3s ease;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Sidebar hidden on mobile */
+@media (max-width: 991px) {
+  .sidebar {
+    left: -270px;
+  }
+  .sidebar.show {
+    left: 0;
+  }
+  .main-content {
+    margin-left: 0; /* Full width when sidebar hidden */
+  }
+  p{
+    color:#212529 !important;
+  }
+}
+
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const sidebar = document.getElementById('sidebarMenu');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const xtoggleBtn = document.getElementById('xsidebarToggle');
+    const mainContent = document.querySelector('.main-content');
+
+    toggleBtn.addEventListener('click', function () {
+      sidebar.classList.add('show');
+      sidebar.classList.remove('hide');
+    });
+
+    xtoggleBtn.addEventListener('click', function () {
+      sidebar.classList.remove('show');
+      sidebar.classList.add('hide');
+    });
+
+  });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const filterBtns = document.querySelectorAll('.term-filter');
+  const questionCards = document.querySelectorAll('.question-card');
+  const noResultsMsg = document.getElementById('noResultsMsg');
+  const questionCount = document.getElementById('questionCount');
+
+  function renumberVisible() {
+    let counter = 1;
+    questionCards.forEach(card => {
+      if (card.style.display !== 'none') {
+        const label = card.querySelector('.question-number');
+        if (label) label.textContent = `Q${counter++}:`;
+      }
+    });
+  }
+
+  function updateCount(visible) {
+    questionCount.textContent = `Showing ${visible} of ${questionCards.length} question${questionCards.length !== 1 ? 's' : ''}`;
+  }
+
+  updateCount(questionCards.length);
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', function () {
+      const selectedTerm = this.dataset.term;
+
+      filterBtns.forEach(b => {
+        b.classList.remove('active', 'btn-primary');
+        b.classList.add('btn-outline-secondary');
+      });
+      this.classList.add('active', 'btn-primary');
+      this.classList.remove('btn-outline-secondary');
+
+      let visibleCount = 0;
+      questionCards.forEach(card => {
+        const match = selectedTerm === 'all' || card.dataset.term === selectedTerm;
+        card.style.display = match ? '' : 'none';
+        if (match) visibleCount++;
+      });
+
+      noResultsMsg.classList.toggle('d-none', visibleCount > 0);
+      updateCount(visibleCount);
+      renumberVisible(); // ← re-number after filtering
+    });
+  });
+});
+</script>
+
+<footer>
+      <p>&copy; {{ now|date:"Y" }} CBT System — Powered by <strong>Nucleus Tech Solutions</strong></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,573 @@
+{% load static %}
+{% include 'header.html' %}
+
+<!-- =========================================================
+     STANDARD SCHOOL CBT — HOME PAGE
+     Tailwind + fonts already loaded by header.html
+     ========================================================= -->
+
+<style>
+  /* ---- Section label pip ---- */
+  .section-pip {
+    display: inline-flex; align-items: center; gap: .5rem;
+    color: #F0A500; font-weight: 600; font-size: .8rem;
+    letter-spacing: .12em; text-transform: uppercase;
+  }
+  .section-pip::before {
+    content:''; display:block; width:28px; height:2px; background:#F0A500;
+  }
+
+  /* ---- Stat card ---- */
+  .stat-card {
+    position: relative; overflow: hidden; border-radius: 12px;
+    padding: 1.5rem 1rem; text-align: center; color: #fff;
+  }
+  .stat-card::after {
+    content:''; position:absolute; bottom:-20px; right:-20px;
+    width:80px; height:80px; border-radius:50%;
+    background: rgba(255,255,255,.08);
+  }
+
+  /* ---- Feature icon circle ---- */
+  .feat-icon {
+    width:52px; height:52px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; font-size:1.25rem; color:#fff;
+  }
+
+  /* ---- Gallery card hover ---- */
+  .gallery-card { transition: transform .3s, box-shadow .3s; }
+  .gallery-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(11,30,61,.18); }
+  .gallery-overlay {
+    background: linear-gradient(to top, rgba(11,30,61,.92) 0%, transparent 60%);
+  }
+
+  /* ---- Contact info icon ---- */
+  .ci-icon {
+    width:48px; height:48px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem; flex-shrink:0; color:#fff;
+  }
+
+  /* ---- Carousel dots ---- */
+  .carousel-dot { width:10px; height:10px; border-radius:50%; background:#d1d9e8; cursor:pointer; transition:background .2s, transform .2s; }
+  .carousel-dot.active { background:#F0A500; transform:scale(1.3); }
+
+  /* ---- Hero search ---- */
+  .search-bar { backdrop-filter: blur(6px); }
+</style>
+
+
+<!-- =============================================
+     HERO SECTION
+     NOTE: No overflow-hidden on the section — that was clipping the sticky navbar
+     ============================================= -->
+<section class="relative" style="min-height:92vh; display:flex; align-items:center;">
+  <!-- Background image -->
+  <div class="absolute inset-0" style="z-index:0; overflow:hidden;">
+    <img src="{% static 'img/courses-2.jpg' %}"
+         class="w-full h-full object-cover object-center"
+         alt="Hero background" loading="eager">
+    <div class="absolute inset-0"
+         style="background: linear-gradient(135deg,rgba(7,21,43,.92) 0%,rgba(11,30,61,.80) 60%,rgba(11,30,61,.55) 100%);"></div>
+  </div>
+
+  <!-- Decorative wave bottom -->
+  <div class="absolute left-0 right-0" style="bottom:-1px; z-index:2;">
+    <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg"
+         preserveAspectRatio="none" style="display:block; width:100%;">
+      <path d="M0 80 C360 0 1080 0 1440 80 L1440 80 L0 80Z" fill="#F4F6FA"/>
+    </svg>
+  </div>
+
+  <!-- Content -->
+  <div class="relative w-full px-4 py-24 text-center animate__animated animate__fadeIn" style="z-index:1;">
+
+    <p class="section-pip justify-center mb-4 animate__animated animate__fadeInDown"
+       style="color:#F0A500; display:inline-flex;">
+      Welcome to {{getTitle.name}}
+    </p>
+
+    <h1 class="text-white animate__animated animate__fadeInUp"
+        style="font-family:'Playfair Display',serif; font-size:clamp(2.2rem,6vw,4.2rem); line-height:1.12; max-width:820px; margin:0 auto 1.25rem;">
+      Learn Smarter.<br>
+      <span style="color:#F0A500;">Assess Better.</span>
+    </h1>
+
+    <p class="animate__animated animate__fadeInUp animate__delay-1s"
+       style="color:#c5d2e8; font-size:clamp(1rem,2vw,1.2rem); max-width:560px; margin:0 auto 2.5rem; line-height:1.6;">
+      Empowering students through digital education and computer-based assessments — anytime, anywhere.
+    </p>
+
+    <!-- Search pill -->
+    <div class="search-bar mx-auto animate__animated animate__fadeInUp animate__delay-1s"
+         style="max-width:640px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.2); border-radius:999px; display:flex; align-items:center; overflow:hidden;">
+      <div style="position:relative; flex-shrink:0;">
+        <select id="heroSubject"
+                style="appearance:none; background:transparent; color:#fff; padding:.9rem 2.5rem .9rem 1.25rem; font-size:.9rem; border:none; outline:none; cursor:pointer; font-weight:500;">
+          <option value="" style="color:#222;">All Subjects</option>
+          <option style="color:#222;">Mathematics</option>
+          <option style="color:#222;">Science</option>
+          <option style="color:#222;">English</option>
+        </select>
+        <span style="position:absolute;right:.7rem;top:50%;transform:translateY(-50%);color:#F0A500;pointer-events:none;">▾</span>
+        <div style="position:absolute;right:0;top:20%;bottom:20%;width:1px;background:rgba(255,255,255,.25);"></div>
+      </div>
+      <input type="text" placeholder="Search subjects, classes or exams…"
+             style="flex:1; background:transparent; border:none; outline:none; color:#fff; padding:.9rem 1rem; font-size:.95rem; min-width:0;">
+      <button style="background:#F0A500; color:#07152B; border:none; padding:.9rem 1.6rem; font-weight:700; font-size:.9rem; display:flex; align-items:center; gap:.5rem; cursor:pointer; flex-shrink:0; transition:background .2s;"
+              onmouseover="this.style.background='#FFB829'" onmouseout="this.style.background='#F0A500'">
+        <i class="fa fa-search"></i>
+        <span style="display:none;" class="sm-show">Search</span>
+      </button>
+    </div>
+
+    <!-- Quick stats strip -->
+    <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:1.5rem; margin-top:2.5rem;"
+         class="animate__animated animate__fadeInUp animate__delay-2s">
+      <div style="color:rgba(255,255,255,.75); font-size:.85rem;">
+        <span style="color:#F0A500;font-weight:700;font-size:1.1rem;">{{courseCount}}+</span>&nbsp; Subjects
+      </div>
+      <div style="color:rgba(255,255,255,.4);">|</div>
+      <div style="color:rgba(255,255,255,.75); font-size:.85rem;">
+        <span style="color:#F0A500;font-weight:700;font-size:1.1rem;">{{QuestionCount}}+</span>&nbsp; Questions
+      </div>
+      <div style="color:rgba(255,255,255,.4);">|</div>
+      <div style="color:rgba(255,255,255,.75); font-size:.85rem;">
+        <span style="color:#F0A500;font-weight:700;font-size:1.1rem;">{{StudentCount}}+</span>&nbsp; Active Students
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- =============================================
+     ABOUT SECTION
+     ============================================= -->
+<section id="about" style="padding:5rem 1rem; background:#F4F6FA;">
+  <div style="max-width:1100px; margin:0 auto;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:3rem; align-items:center;">
+
+      <!-- Image -->
+      <div class="reveal" style="position:relative; min-height:420px; grid-column:1;">
+        <div style="border-radius:20px; overflow:hidden; position:absolute; inset:0; box-shadow:0 24px 60px rgba(11,30,61,.18);">
+          <img src="{{ GetAboutSchoolSec.aboutImage.url }}" alt="About"
+               style="width:100%; height:100%; object-fit:cover;" loading="lazy">
+        </div>
+        <div style="position:absolute; bottom:-18px; right:-18px; width:100px; height:100px; border-radius:16px; background:#F0A500; z-index:0; opacity:.5;"></div>
+        <div style="position:absolute; top:-14px; left:-14px; width:60px; height:60px; border-radius:12px; background:#0B1E3D; z-index:0; opacity:.3;"></div>
+      </div>
+
+      <!-- Content -->
+      <div class="reveal" style="grid-column:2;">
+        <p class="section-pip" style="margin-bottom:.5rem;">About Us</p>
+        <h2 style="font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3vw,2.6rem); color:#0B1E3D; line-height:1.2; margin-bottom:.5rem;">
+          {{AboutSchool.aboutus}}
+        </h2>
+        <div style="width:48px; height:4px; background:#F0A500; border-radius:9px; margin:.75rem 0 1.25rem;"></div>
+        <p style="color:#4a5568; line-height:1.8; margin-bottom:1rem;">
+          At <strong style="color:#0B1E3D;">{{getTitle.name}}</strong>, our
+          <strong>Computer-Based Test (CBT) System</strong> is designed to redefine how students
+          learn and take exams. We combine digital innovation, academic excellence, and
+          user-friendly design to provide a modern testing experience.
+        </p>
+        <p style="color:#4a5568; line-height:1.8; margin-bottom:2rem;">
+          Our platform offers secure assessments, instant grading, and detailed feedback
+          to help both students and teachers monitor progress effectively.
+        </p>
+
+        <!-- Stats grid -->
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:.75rem;">
+          <div class="stat-card" style="background:linear-gradient(135deg,#1a7a50,#22a06b);">
+            <p style="font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; margin:0;">{{courseCount}}</p>
+            <p style="font-size:.7rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; margin:.3rem 0 0; opacity:.9;">Available<br>Subjects</p>
+          </div>
+          <div class="stat-card" style="background:linear-gradient(135deg,#0B1E3D,#1a3a6e);">
+            <p style="font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; margin:0;">{{QuestionCount}}</p>
+            <p style="font-size:.7rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; margin:.3rem 0 0; opacity:.9;">Practice<br>Questions</p>
+          </div>
+          <div class="stat-card" style="background:linear-gradient(135deg,#5a4e8a,#7c6bbb);">
+            <p style="font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; margin:0;">{{TeacherCount}}</p>
+            <p style="font-size:.7rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; margin:.3rem 0 0; opacity:.9;">Expert<br>Instructors</p>
+          </div>
+          <div class="stat-card" style="background:linear-gradient(135deg,#C47F00,#F0A500);">
+            <p style="font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:900; margin:0; color:#07152B;">{{StudentCount}}</p>
+            <p style="font-size:.7rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; margin:.3rem 0 0; opacity:.85; color:#07152B;">Active<br>Students</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Mobile stack fix for about section -->
+<style>
+  @media (max-width: 768px) {
+    #about > div > div {
+      grid-template-columns: 1fr !important;
+    }
+    #about > div > div > div:first-child {
+      grid-column: 1 !important;
+      min-height: 280px !important;
+    }
+    #about > div > div > div:last-child {
+      grid-column: 1 !important;
+    }
+  }
+</style>
+
+
+<!-- =============================================
+     FEATURES / WHY CHOOSE US
+     ============================================= -->
+<section style="background:#0B1E3D; padding:5rem 1rem;">
+  <div style="max-width:1100px; margin:0 auto;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:3rem; align-items:center;">
+
+      <!-- Left copy -->
+      <div class="reveal">
+        <p class="section-pip" style="margin-bottom:.5rem;">Why Choose {{getTitle.name}}?</p>
+        <h2 style="font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3vw,2.6rem); color:#fff; line-height:1.2; margin-bottom:.5rem;">
+          Empowering Students Through Smart Learning
+        </h2>
+        <div style="width:48px; height:4px; background:#F0A500; border-radius:9px; margin:.75rem 0 1.5rem;"></div>
+        <p style="color:#8fa3c5; line-height:1.8; margin-bottom:2rem;">
+          <strong style="color:#fff;">{{getTitle.name}}</strong> CBT System provides a modern, interactive,
+          and reliable testing platform built for fairness, accuracy, and a real exam-like experience.
+        </p>
+
+        <div style="display:flex; flex-direction:column; gap:1.5rem;">
+          <div style="display:flex; gap:1rem; align-items:flex-start;">
+            <div class="feat-icon" style="background:#F0A500;">
+              <i class="fa fa-laptop" style="color:#07152B;"></i>
+            </div>
+            <div>
+              <h4 style="font-family:'Playfair Display',serif; color:#fff; font-size:1.05rem; margin:0 0 .3rem;">Smart Computer-Based Testing</h4>
+              <p style="color:#8fa3c5; margin:0; font-size:.9rem; line-height:1.7;">
+                Real-time assessments that promote digital literacy and better exam prep for secondary school students.
+              </p>
+            </div>
+          </div>
+          <div style="display:flex; gap:1rem; align-items:flex-start;">
+            <div class="feat-icon" style="background:#7c6bbb;">
+              <i class="fa fa-user-shield"></i>
+            </div>
+            <div>
+              <h4 style="font-family:'Playfair Display',serif; color:#fff; font-size:1.05rem; margin:0 0 .3rem;">Secure &amp; Reliable Platform</h4>
+              <p style="color:#8fa3c5; margin:0; font-size:.9rem; line-height:1.7;">
+                Data protection and fairness in every test through smart monitoring and random question distribution.
+              </p>
+            </div>
+          </div>
+          <div style="display:flex; gap:1rem; align-items:flex-start;">
+            <div class="feat-icon" style="background:#22a06b;">
+              <i class="fa fa-chart-line"></i>
+            </div>
+            <div>
+              <h4 style="font-family:'Playfair Display',serif; color:#fff; font-size:1.05rem; margin:0 0 .3rem;">Instant Performance Reports</h4>
+              <p style="color:#8fa3c5; margin:0; font-size:.9rem; line-height:1.7;">
+                Instant feedback, scores, and analytics to track progress and identify improvement areas.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right image -->
+      <div class="reveal" style="position:relative; min-height:420px;">
+        <div style="border-radius:20px; overflow:hidden; position:absolute; inset:0; box-shadow:0 24px 60px rgba(0,0,0,.4);">
+          <img src="{{ AboutSchool.aboutImage.url }}" alt="CBT Feature"
+               style="width:100%; height:100%; object-fit:cover; opacity:.9;" loading="lazy">
+        </div>
+        <div style="position:absolute; top:-20px; right:-20px; width:120px; height:120px; border-radius:50%; border:3px solid #F0A500; opacity:.3; pointer-events:none;"></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<style>
+  @media (max-width: 768px) {
+    section[style*="background:#0B1E3D"] > div > div {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
+
+
+<!-- =============================================
+     GALLERY / COURSES CAROUSEL
+     ============================================= -->
+<section style="background:#F4F6FA; padding:5rem 1rem;">
+  <div style="max-width:1100px; margin:0 auto;">
+
+    <div class="reveal" style="text-align:center; margin-bottom:3rem;">
+      <p class="section-pip" style="justify-content:center; display:inline-flex; margin-bottom:.5rem;">
+        {{getTitle.name}} Gallery
+      </p>
+      <h2 style="font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3vw,2.6rem); color:#0B1E3D; line-height:1.2;">
+        Explore Our Creative Gallery
+      </h2>
+      <div style="width:48px; height:4px; background:#F0A500; border-radius:9px; margin:.75rem auto 0;"></div>
+    </div>
+
+    <!-- Carousel -->
+    <div style="position:relative; overflow:hidden;" id="galleryCarousel">
+      <div id="galleryTrack"
+           style="display:flex; gap:1.25rem; transition:transform .45s cubic-bezier(.4,0,.2,1); will-change:transform;">
+        {% for slide in slides %}
+        <div class="gallery-card"
+             style="min-width:300px; max-width:300px; border-radius:16px; overflow:hidden; background:#fff; box-shadow:0 8px 24px rgba(11,30,61,.1); flex-shrink:0;">
+          <div style="position:relative; height:200px; overflow:hidden;">
+            <img src="{{ slide.image.url }}" alt="{{ slide.title }}"
+                 style="width:100%; height:100%; object-fit:cover; transition:transform .4s; display:block;"
+                 onmouseover="this.style.transform='scale(1.05)'"
+                 onmouseout="this.style.transform='scale(1)'" loading="lazy">
+            <div class="gallery-overlay" style="position:absolute; inset:0;"></div>
+            <p style="position:absolute; bottom:.75rem; left:1rem; color:#fff; font-weight:700; font-size:.95rem; margin:0; font-family:'Playfair Display',serif;">
+              {{ slide.title }}
+            </p>
+          </div>
+          <div style="padding:1.25rem;">
+            <p style="color:#4a5568; font-size:.88rem; line-height:1.6; margin:0 0 1rem;">
+              {{ slide.description|truncatewords:15 }}
+            </p>
+            <a href="#"
+               style="display:inline-flex; align-items:center; gap:.4rem; color:#0B1E3D; font-weight:600; font-size:.82rem; text-decoration:none; border:1.5px solid #0B1E3D; padding:.4rem .9rem; border-radius:8px; transition:background .2s,color .2s;"
+               onmouseover="this.style.background='#0B1E3D';this.style.color='#fff'"
+               onmouseout="this.style.background='transparent';this.style.color='#0B1E3D'">
+              Read More <i class="fa fa-arrow-right" style="font-size:.72rem;"></i>
+            </a>
+          </div>
+        </div>
+        {% empty %}
+        <div style="padding:3rem; text-align:center; color:#6B7C9B; width:100%;">
+          <i class="fa fa-images" style="font-size:2.5rem; opacity:.3; display:block; margin-bottom:.75rem;"></i>
+          No gallery images available yet.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-top:2rem;">
+      <button id="prevBtn"
+              style="width:44px; height:44px; border-radius:50%; border:2px solid #0B1E3D; background:transparent; color:#0B1E3D; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:all .2s;"
+              onmouseover="this.style.background='#0B1E3D';this.style.color='#fff'"
+              onmouseout="this.style.background='transparent';this.style.color='#0B1E3D'">
+        <i class="fa fa-chevron-left"></i>
+      </button>
+      <div id="carouselDots" style="display:flex; gap:.5rem;"></div>
+      <button id="nextBtn"
+              style="width:44px; height:44px; border-radius:50%; background:#F0A500; border:none; color:#07152B; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:background .2s;"
+              onmouseover="this.style.background='#FFB829'"
+              onmouseout="this.style.background='#F0A500'">
+        <i class="fa fa-chevron-right"></i>
+      </button>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- =============================================
+     CONTACT SECTION
+     ============================================= -->
+<section style="background:#fff; padding:5rem 1rem;">
+  <div style="max-width:1100px; margin:0 auto;">
+
+    <div class="reveal" style="text-align:center; margin-bottom:3.5rem;">
+      <p class="section-pip" style="justify-content:center; display:inline-flex; margin-bottom:.5rem;">
+        Need Help?
+      </p>
+      <h2 style="font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3vw,2.6rem); color:#0B1E3D; line-height:1.2;">
+        Send Us A Message
+      </h2>
+      <div style="width:48px; height:4px; background:#F0A500; border-radius:9px; margin:.75rem auto 0;"></div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:2fr 3fr; gap:2.5rem; align-items:start;">
+
+      <!-- Info card -->
+      <div class="reveal" style="background:#0B1E3D; border-radius:20px; padding:2.5rem; color:#fff;">
+        <h3 style="font-family:'Playfair Display',serif; font-size:1.4rem; margin-bottom:2rem; color:#fff;">Contact Information</h3>
+        <div style="display:flex; flex-direction:column; gap:1.75rem;">
+          <div style="display:flex; gap:1rem; align-items:flex-start;">
+            <div class="ci-icon" style="background:#F0A500;"><i class="fa fa-map-marker-alt" style="color:#07152B;"></i></div>
+            <div>
+              <p style="font-weight:700; margin:0 0 .25rem; font-size:.9rem;">Our Location</p>
+              <p style="color:#8fa3c5; margin:0; font-size:.85rem; line-height:1.6;">1Block 10th, 9th Avenue,<br>Mountain View Estate,<br>Sobi, Ilorin, Kwara State.</p>
+            </div>
+          </div>
+          <div style="display:flex; gap:1rem; align-items:flex-start;">
+            <div class="ci-icon" style="background:#22a06b;"><i class="fa fa-phone-alt"></i></div>
+            <div>
+              <p style="font-weight:700; margin:0 0 .25rem; font-size:.9rem;">Call Us</p>
+              <p style="color:#8fa3c5; margin:0; font-size:.85rem;">+2347067071427</p>
+            </div>
+          </div>
+          <div style="display:flex; gap:1rem; align-items:flex-start;">
+            <div class="ci-icon" style="background:#7c6bbb;"><i class="fa fa-envelope"></i></div>
+            <div>
+              <p style="font-weight:700; margin:0 0 .25rem; font-size:.9rem;">Email Us</p>
+              <p style="color:#8fa3c5; margin:0; font-size:.82rem; word-break:break-all;">heroesgroupofschool053@gmail.com</p>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:2.5rem; display:flex; gap:.5rem; opacity:.25;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#F0A500;"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#F0A500;"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#F0A500;"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#F0A500;"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#F0A500;"></div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#F0A500;"></div>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="reveal">
+        <div id="form-messages"></div>
+        <form id="contactForm" method="POST" action="{% url 'MyHome' %}">
+          {% csrf_token %}
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+            <div>
+              <label style="display:block; font-size:.78rem; font-weight:600; color:#0B1E3D; margin-bottom:.4rem; text-transform:uppercase; letter-spacing:.06em;">Your Name</label>
+              <input type="text" name="name" class="field" placeholder="e.g. Aisha Bello" required>
+            </div>
+            <div>
+              <label style="display:block; font-size:.78rem; font-weight:600; color:#0B1E3D; margin-bottom:.4rem; text-transform:uppercase; letter-spacing:.06em;">Email Address</label>
+              <input type="email" name="email" class="field" placeholder="you@example.com" required>
+            </div>
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label style="display:block; font-size:.78rem; font-weight:600; color:#0B1E3D; margin-bottom:.4rem; text-transform:uppercase; letter-spacing:.06em;">Subject</label>
+            <input type="text" name="subject" class="field" placeholder="What's this about?" required>
+          </div>
+          <div style="margin-bottom:1.5rem;">
+            <label style="display:block; font-size:.78rem; font-weight:600; color:#0B1E3D; margin-bottom:.4rem; text-transform:uppercase; letter-spacing:.06em;">Message</label>
+            <textarea name="message" class="field" rows="5" placeholder="Write your message here…" required style="resize:vertical;"></textarea>
+          </div>
+          <button type="submit" id="submitBtn"
+                  style="display:inline-flex; align-items:center; gap:.6rem; background:#F0A500; color:#07152B; border:none; padding:.875rem 2rem; border-radius:12px; font-weight:700; font-size:.95rem; cursor:pointer; transition:background .2s,transform .1s;"
+                  onmouseover="this.style.background='#FFB829'"
+                  onmouseout="this.style.background='#F0A500'"
+                  onmousedown="this.style.transform='scale(.97)'"
+                  onmouseup="this.style.transform='scale(1)'">
+            <i class="fa fa-paper-plane"></i> Send Message
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<style>
+  @media (max-width: 768px) {
+    section[style*="background:#fff"] > div > div:last-of-type {
+      grid-template-columns: 1fr !important;
+    }
+    section[style*="background:#fff"] > div > div:last-of-type > div:first-child {
+      border-radius: 16px !important;
+    }
+  }
+</style>
+
+
+{% include 'footer.html' %}
+
+
+<!-- =============================================
+     SCRIPTS  (jQuery already safe to load once)
+     ============================================= -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+/* ── AJAX Contact Form ── */
+$(document).ready(function () {
+  $('#contactForm').on('submit', function (e) {
+    e.preventDefault();
+    const $btn = $('#submitBtn');
+    $btn.html('<i class="fa fa-spinner fa-spin"></i> Sending…').prop('disabled', true);
+
+    $.ajax({
+      type: 'POST',
+      url: '{% url "MyHome" %}',
+      data: $(this).serialize(),
+      success: function () {
+        $('#form-messages').html(
+          '<div style="background:#dcfce7;border:1px solid #86efac;color:#166534;padding:.85rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:.9rem;display:flex;align-items:center;gap:.5rem;">' +
+          '<i class="fa fa-check-circle"></i>&nbsp; Your message has been sent successfully!</div>'
+        );
+        $('#contactForm')[0].reset();
+        $btn.html('<i class="fa fa-paper-plane"></i> Send Message').prop('disabled', false);
+      },
+      error: function () {
+        $('#form-messages').html(
+          '<div style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:.85rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:.9rem;display:flex;align-items:center;gap:.5rem;">' +
+          '<i class="fa fa-exclamation-circle"></i>&nbsp; Something went wrong. Please try again later.</div>'
+        );
+        $btn.html('<i class="fa fa-paper-plane"></i> Send Message').prop('disabled', false);
+      }
+    });
+  });
+});
+
+
+/* ── Gallery Carousel ── */
+(function () {
+  const track   = document.getElementById('galleryTrack');
+  const dotsEl  = document.getElementById('carouselDots');
+  if (!track) return;
+
+  const cards   = track.querySelectorAll('.gallery-card');
+  const cardW   = 300 + 20;
+  let   current = 0;
+
+  function visCount() {
+    return Math.max(1, Math.floor(track.parentElement.offsetWidth / cardW));
+  }
+  function maxIdx() {
+    return Math.max(0, cards.length - visCount());
+  }
+
+  // Build dots
+  const totalDots = maxIdx() + 1;
+  for (let i = 0; i < totalDots; i++) {
+    const d = document.createElement('div');
+    d.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', function () { goTo(i); });
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(idx) {
+    current = Math.max(0, Math.min(idx, maxIdx()));
+    track.style.transform = 'translateX(-' + (current * cardW) + 'px)';
+    dotsEl.querySelectorAll('.carousel-dot').forEach(function (d, i) {
+      d.classList.toggle('active', i === current);
+    });
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', function () { goTo(current - 1); });
+  document.getElementById('nextBtn').addEventListener('click', function () { goTo(current + 1); });
+  setInterval(function () { goTo(current < maxIdx() ? current + 1 : 0); }, 4500);
+  window.addEventListener('resize', function () { goTo(Math.min(current, maxIdx())); }, { passive: true });
+})();
+
+
+/* ── Scroll Reveal ── */
+(function () {
+  const els = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  els.forEach(function (el) { obs.observe(el); });
+})();
+</script>
+
+</body>
+</html>

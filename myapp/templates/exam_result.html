@@ -1,0 +1,153 @@
+{% load django_browser_reload %}
+{% django_browser_reload_script %}
+{% load exam_tags %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam Results - {{ exam.title }}</title>
+<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    background: #f4f7fc;
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+}
+.result-container {
+    max-width: 1000px;
+    margin: 50px auto;
+    padding: 30px 40px;
+}
+.summary-card {
+    background: linear-gradient(90deg, #4e73df, #1cc88a);
+    color: #fff;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 40px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+.summary-card h2 {
+    font-weight: 700;
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+}
+.summary-card p {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+.progress {
+    height: 20px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.3);
+}
+.progress-bar {
+    font-weight: 500;
+    line-height: 20px;
+}
+.question-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+}
+.question-card p {
+    margin-bottom: 8px;
+}
+.correct {
+    color: #1cc88a;
+    font-weight: 600;
+}
+.wrong {
+    color: #e74a3b;
+    font-weight: 600;
+}
+.btn-home {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border-radius: 10px;
+    margin-top: 30px;
+}
+.big-success {
+    background: #fff;
+    border-radius: 16px;
+    padding: 60px;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+.big-success h2 {
+    color: #1cc88a;
+    font-weight: 700;
+    font-size: 2.5rem;
+}
+.big-success p {
+    font-size: 1.1rem;
+    color: #555;
+}
+.big-success i {
+    font-size: 5rem;
+    color: #1cc88a;
+    margin-bottom: 20px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="result-container">
+
+        {% if request.user.groups.first.name == "Student" %}
+            <!-- 🎓 Student view -->
+            <div class="big-success">
+                <i class="fas fa-check-circle"></i>
+                <h2>Exam Submitted Successfully!</h2>
+                <p>You’ve completed <strong>{{ exam.title }}</strong>.</p>
+                <p>Click below to return to your portal and start your next exam.</p>
+                <a href="{% url 'student_portal' %}" class="btn btn-success btn-home">Back to Portal</a>
+            </div>
+
+        {% else %}
+            <!-- 👨‍🏫 Educator view -->
+            <div class="summary-card">
+                <h2>Exam Results</h2>
+                <p>{{ exam.title }}</p>
+                <p>Total Questions: {{ total }} | Correct: {{ score }} | Percentage: {{ percentage }}%</p>
+                <div class="progress">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {{ percentage }}%" 
+                         aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="{{ total }}">
+                        {{ score }} / {{ total }}
+                    </div>
+                </div>
+            </div>
+
+            {% for question in questions %}
+            <div class="question-card">
+                <p><strong>Q{{ forloop.counter }}. {{ question.question_text|safe }}</strong></p>
+                <p>Your Answer: 
+                    {% if answers|get_item:question.id == question.correct_answer %}
+                        <span class="correct">{{ answers|get_item:question.id }}</span>
+                    {% else %}
+                        <span class="wrong">{{ answers|get_item:question.id }}</span>
+                    {% endif %}
+                </p>
+                <p>Correct Answer: <span class="correct">{{ question.correct_answer }}</span></p>
+            </div>
+            {% endfor %}
+
+            <a href="{% url 'student_portal' %}" class="btn btn-primary btn-home">Back to Portal</a>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

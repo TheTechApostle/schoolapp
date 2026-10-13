@@ -1,0 +1,191 @@
+{% load static %}
+{% include '../header.html' %}
+
+<style>
+    body { background-color: #f4f6f9; }
+
+    .card-custom {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        background: #fff;
+        padding: 25px;
+    }
+
+    .progress { height: 25px; }
+
+    .history-table {
+        max-height: 450px;
+        overflow-y: auto;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+        font-size: 14px;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="row g-4">
+
+        <!-- LEFT SIDE -->
+        <div class="col-md-7">
+
+            <!-- Student Summary -->
+            <div class="card-custom">
+                <h3 class="mb-3 fw-bold text-primary">{{ enrollment.student.full_name }}</h3>
+                <p><strong>Class:</strong> {{ enrollment.classgroup.name }}</p>
+                <p><strong>Session:</strong> {{ enrollment.session.name }}</p>
+
+                <hr>
+
+                <p><strong>Total Fee:</strong> ₦{{ fee.amount }}</p>
+                <p><strong>Amount Paid:</strong> ₦{{ payment.amount_paid }}</p>
+                <p><strong>Balance:</strong> ₦{{ balance }}</p>
+
+                <div class="mt-3">
+                    <label class="fw-semibold">Payment Progress</label>
+                    <div class="progress mt-1">
+                        <div class="progress-bar" role="progressbar"
+                             style="width: {{ percentage_paid }}%">
+                            {{ percentage_paid|floatformat:2 }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Form -->
+            <div class="card-custom">
+                <h4 class="mb-3">Make a Payment</h4>
+
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="fw-semibold">Amount to Pay</label>
+                        <input type="number" step="0.01" name="amount" class="form-control"
+                               placeholder="Enter amount" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="fw-semibold">Select Payment Method</label>
+                        <select name="method" class="form-select form-control" required>
+                            <option value="Cash">Cash / Bank</option>
+                            <option value="Paystack">Pay Online (Paystack)</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary w-100">Pay Now</button>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="col-md-5">
+            <div class="card-custom">
+                <h4 class="mb-3">Payment History</h4>
+
+                {% if history %}
+                <div class="history-table">
+                    <table class="table table-striped table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for h in history %}
+                                <tr>
+                                    <td>₦{{ h.amount }}</td>
+                                    <td>{{ h.method }}</td>
+                                    <td>{{ h.date_paid|date:"d M Y H:i" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <p class="text-muted">No payment history available.</p>
+                {% endif %}
+            </div>
+                <div class="card-custom mt-4">
+                <h5 class="mb-3">Payments by Month</h5>
+
+                {% if data %}
+                    <canvas id="monthlyPaymentChart"></canvas>
+                {% else %}
+                    <p class="text-muted">No payment data to display.</p>
+                {% endif %}
+            </div>
+        </div>
+    
+
+    </div>
+</div>
+
+{% include '../footer.html' %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('monthlyPaymentChart');
+
+if (ctx) {
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ labels|safe }},
+            datasets: [{
+                label: 'Total Paid (₦)',
+                data: {{ data|safe }},
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+</script>
+
+<script>
+    // Paystack JS integration (ping when user selects Paystack)
+    function payWithPaystack(amount) {
+        var handler = PaystackPop.setup({
+            key: "{{ PAYSTACK_PUBLIC_KEY }}",
+            email: "{{ enrollment.student.email }}",
+            amount: amount * 100,
+            ref: "{{ reference }}",
+            metadata: {
+                custom_fields: [
+                    {
+                        display_name: "Student",
+                        variable_name: "student",
+                        value: "{{ enrollment.student.full_name }}"
+                    }
+                ],
+                enrollment_id: "{{ enrollment.id }}"
+            },
+            callback: function(response){
+                window.location.href = "/payments/paystack_callback/?reference=" + response.reference;
+            }
+        });
+        handler.openIframe();
+    }
+</script>

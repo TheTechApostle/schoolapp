@@ -1,0 +1,112 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ course.title }} - Course Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #f8fafc;
+      color: #1e293b;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    .sidebar-col {
+      border-right: 1px solid #e5e7eb;
+      min-height: 100vh;
+      background: #fff;
+    }
+    /* Modern glass-style header */
+    .course-header {
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    }
+    .course-header h2 {
+      font-weight: 700;
+      color: #111827;
+    }
+    .course-header p {
+      color: #374151;
+    }
+    .lecture-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 1.2rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,.06);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .lecture-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    }
+    .btn-future {
+      background: #111827;
+      border:none; color:white; border-radius:999px;
+      padding:.4rem 1rem; font-weight:600;
+      transition: transform .2s, background .2s;
+    }
+    .btn-future:hover { transform: scale(1.05); background:#374151; }
+  </style>
+</head>
+<body>
+
+{% include "header.html" %}
+
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3 sidebar-col p-0">
+      {% include "elearning/sidebar.html" %}
+    </div>
+
+    <!-- Main content -->
+    <div class="col-md-9 py-4">
+      <!-- Course Header -->
+      <div class="course-header">
+        <h2>{{ course.title }}</h2>
+        <p class="mb-0">{{ course.description }}</p>
+        <small class="d-block mt-2 text-muted">Instructor: {{ course.instructor.full_name }}</small>
+        <small class="d-block text-muted">Department: {{ course.department.name }}</small>
+      </div>
+
+      <!-- Lectures -->
+      <h3 class="mb-4 fw-bold text-dark"><i class="fa fa-chalkboard-teacher"></i> Lectures</h3>
+      <div class="row g-4">
+        {% for lecture in course.lectures.all %}
+          <div class="col-md-6">
+            <div class="lecture-card">
+              <h5 class="fw-semibold">{{ lecture.title }}</h5>
+              <p class="text-muted">{{ lecture.description|truncatechars:100 }}</p>
+              <div class="d-flex justify-content-between align-items-center">
+                <a href="{% url 'lecture_student_view' lecture.id %}" class="btn-future btn-sm">
+                  <i class="fa fa-play"></i> Watch
+                </a>
+                {% if lecture.file %}
+                  <a href="{{ lecture.file.url }}" class="btn btn-outline-secondary btn-sm" download>
+                    <i class="fa fa-download"></i> Download
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="alert alert-warning">No lectures available for this course yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include "footer.html" %}
+
+</body>
+</html>

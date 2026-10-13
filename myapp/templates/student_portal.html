@@ -1,0 +1,198 @@
+{% load django_browser_reload %}
+{% django_browser_reload_script %}
+{% load dict_extras %}
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {% django_browser_reload_script %}
+
+    <!-- CSS -->
+    <link href="{% static 'css/style.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f2f5, #e0e7ff);
+            font-family: 'Roboto', sans-serif;
+        }
+        .course-card {
+            border-radius: 15px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+            transition: all .3s ease;
+        }
+        .course-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        .exam-btn {
+            border-radius: 50px;
+            background: linear-gradient(90deg,#0d6efd,#00b4ff);
+            color: #fff;
+            border: none;
+        }
+        .exam-btn:disabled {
+            background: #ccc;
+        }
+    </style>
+</head>
+
+<body>
+{% include "header.html" %}
+
+<div class="container-fluid py-4">
+    <div class="row">
+
+        <!-- ================= Sidebar (Sessions) ================= -->
+        <div class="col-md-3">
+            <h5 class="text-secondary mb-3">Sessions</h5>
+            <div class="list-group">
+                {% for s in sessions %}
+                    <a href="?session={{ s.id }}&term={{ selected_term }}"
+                       class="list-group-item list-group-item-action {% if selected_session.id == s.id %}active{% endif %}">
+                        {{ s.name }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ================= Main Content ================= -->
+        <div class="col-md-9">
+
+            <!-- Logout -->
+            <div class="text-end mb-2 float-right">
+                <a href="{% url 'logout_user' %}" class="btn btn-danger btn-sm">Logout</a>
+            </div>
+
+            <!-- Welcome -->
+            <div class="text-center mb-4">
+                <h2>Welcome, {{ student.full_name }}</h2>
+                <p class="text-muted">Explore your courses and exams</p>
+            </div>
+
+            <!-- ================= Term Tabs ================= -->
+            <ul class="nav nav-tabs mb-3" id="termTabs">
+                {% for t in terms %}
+                <li class="nav-item">
+                    <a href="#"
+                       class="nav-link {% if selected_term == t %}active{% endif %}"
+                       data-term="{{ t }}">
+                        {{ t }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="mb-3">
+                <h4 class="mt-5 mb-3 text-secondary">Scheduled Exams</h4>
+                <div id="examList">
+                    {% include "exam_list.html" %}
+                </div>
+            </div>
+            <!-- ================= Courses ================= -->
+            <h4 id="courseTitle" class="mb-3 text-secondary">
+                Your Courses ({{ selected_session.name }} - {{ selected_term }})
+            </h4>
+
+           <div class="course-wrapper row g-4">
+
+                {% for item in courses %}
+                <div class="col-md-4 my-2">
+                    <div class="course-item px-3 shadow-lg h-100">
+
+                        <div class="d-flex  justify-content-between align-items-start mb-3">
+                            <span class="course-badge">
+                                {{ item.course.code }}
+                            </span>
+                        </div>
+
+                        <h4 class="course-title mb-3">
+                            {{ item.course.title }}
+                        </h4>
+
+                        <p class="course-desc mb-4">
+                            {{ item.course.description|truncatechars:120 }}
+                        </p>
+
+                    </div>
+                </div>
+
+                {% empty %}
+                <div class="text-center py-5">
+                    <h5 class="text-muted">No courses registered.</h5>
+                </div>
+                {% endfor %}
+
+            </div>
+
+            <!-- ================= Exam List ================= -->
+            
+
+        </div>
+    </div>
+</div>
+
+{% include "footer.html" %}
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+<!-- ================= AJAX (TERM SWITCH) ================= -->
+<script>
+document.querySelectorAll('#termTabs .nav-link').forEach(tab => {
+    tab.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const selectedTerm = this.dataset.term;
+        const sessionId = "{{ selected_session.id }}";
+
+        // Toggle active state
+        document.querySelectorAll('#termTabs .nav-link')
+            .forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        // Update heading
+        document.getElementById("courseTitle").innerText =
+            `Your Courses ({{ selected_session.name }} - ${selectedTerm})`;
+
+        // AJAX fetch exams (SESSION + TERM)
+        fetch(`?session=${sessionId}&term=${selectedTerm}&ajax=1`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById("examList").innerHTML = html;
+            })
+            .catch(err => console.error(err));
+    });
+});
+</script>
+<style>
+    .course-wrapper {
+    max-width: 1100px;
+    margin: auto;
+}
+
+.course-item {
+    background: #ffffff;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.course-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+}
+
+.course-title {
+    font-weight: 600;
+    color: #0d6efd;
+}
+
+.course-desc {
+    max-width: 700px;
+}
+</style>
+</body>
+</html>

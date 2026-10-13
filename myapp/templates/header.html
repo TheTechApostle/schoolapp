@@ -1,0 +1,450 @@
+{% load django_browser_reload %}
+{% django_browser_reload_script %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Heroes CBT System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Heroes CBT — School Management & Assessment Platform">
+
+  <!-- Favicon -->
+  <link href="{% static 'img/favicon.ico' %}" rel="icon">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 5 -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+  <!-- Owl Carousel (kept for any existing carousel usage) -->
+  <link href="{% static 'lib/owlcarousel/assets/owl.carousel.min.css' %}" rel="stylesheet">
+
+  <!-- Legacy stylesheet (kept for any pages still using it) -->
+  <link href="{% static 'css/style.css' %}" rel="stylesheet">
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy:  '#0B1E3D',
+            navyD: '#07152B',
+            navyL: '#132B58',
+            gold:  '#F0A500',
+            goldL: '#FFB829',
+            fog:   '#F4F6FA',
+            slate: '#6B7C9B',
+          },
+          fontFamily: {
+            display: ['"Playfair Display"', 'Georgia', 'serif'],
+            body:    ['"DM Sans"', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
+    h1,h2,h3,h4 { font-family: 'Playfair Display', Georgia, serif; }
+
+    /* ── Topbar ── */
+    #site-topbar {
+      background: #07152B;
+      color: rgba(255,255,255,.75);
+      font-size: .82rem;
+      padding: .45rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+    }
+    #site-topbar a { color: rgba(255,255,255,.75); text-decoration: none; transition: color .2s; }
+    #site-topbar a:hover { color: #F0A500; }
+
+    /* ── Navbar shell ── */
+    #site-navbar {
+      background: #fff;
+      box-shadow: 0 2px 16px rgba(11,30,61,.08);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      transition: box-shadow .3s;
+    }
+    #site-navbar.scrolled {
+      box-shadow: 0 4px 24px rgba(11,30,61,.15);
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: .6rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    a{
+        text-decoration:none;
+    }
+
+    /* ── Brand ── */
+    .brand-wrap { display: flex; align-items: center; gap: .65rem; text-decoration: none; flex-shrink:0; }
+    .brand-logo  { width: 46px; height: 46px; border-radius: 10px; object-fit: cover; }
+    .brand-text  { display: flex; flex-direction: column; }
+    .brand-name  {
+      font-family: tahoma;
+      font-size: 0.8rem; font-weight: 700;
+      color: #0B1E3D; line-height: 1.1;
+      text-transform: uppercase;
+    }
+    .brand-sub   { font-size: .68rem; color: #6B7C9B; letter-spacing: .06em; }
+
+    /* ── Desktop nav links ── */
+    #nav-links {
+      display: flex;
+      align-items: center;
+      gap: .15rem;
+      list-style: none;
+      margin: 0; padding: 0;
+    }
+    #nav-links li a {
+      display: block;
+      padding: .5rem .75rem;
+      font-size: .88rem;
+      font-weight: 500;
+      color: #2d3748;
+      text-decoration: none;
+      border-radius: 8px;
+      position: relative;
+      transition: color .2s, background .2s;
+      white-space: nowrap;
+    }
+    #nav-links li a::after {
+      content: '';
+      position: absolute;
+      bottom: 4px; left: .75rem; right: .75rem;
+      height: 2px;
+      background: #F0A500;
+      border-radius: 9px;
+      transform: scaleX(0);
+      transition: transform .25s;
+    }
+    #nav-links li a:hover,
+    #nav-links li a.active {
+      color: #0B1E3D;
+      background: #F4F6FA;
+    }
+    #nav-links li a:hover::after,
+    #nav-links li a.active::after {
+      transform: scaleX(1);
+    }
+
+    /* Login button */
+    .btn-login {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      background: #0B1E3D;
+      color: #fff !important;
+      padding: .5rem 1.25rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: .85rem;
+      text-decoration: none;
+      transition: background .2s, transform .15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .btn-login:hover {
+      background: #F0A500;
+      color: #07152B !important;
+      transform: translateY(-1px);
+    }
+
+    /* ── Hamburger ── */
+    #hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      cursor: pointer;
+      padding: .4rem;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      transition: background .2s;
+    }
+    #hamburger:hover { background: #F4F6FA; }
+    #hamburger span {
+      display: block;
+      width: 24px; height: 2.5px;
+      background: #0B1E3D;
+      border-radius: 9px;
+      transition: transform .3s, opacity .3s, width .3s;
+    }
+    /* open state */
+    #hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+    #hamburger.open span:nth-child(2) { opacity: 0; width: 0; }
+    #hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+    /* ── Mobile drawer ── */
+    #mobile-menu {
+      display: none;
+      flex-direction: column;
+      background: #fff;
+      border-top: 1.5px solid #eef0f6;
+      padding: .75rem 1.25rem 1.25rem;
+      gap: .2rem;
+      box-shadow: 0 8px 24px rgba(11,30,61,.1);
+    }
+    #mobile-menu.open { display: flex; }
+    #mobile-menu a {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .7rem .75rem;
+      font-size: .9rem;
+      font-weight: 500;
+      color: #2d3748;
+      text-decoration: none;
+      border-radius: 10px;
+      transition: background .2s, color .2s;
+    }
+    #mobile-menu a:hover,
+    #mobile-menu a.active {
+      background: #F4F6FA;
+      color: #0B1E3D;
+    }
+    #mobile-menu a i {
+      width: 20px;
+      text-align: center;
+      color: #6B7C9B;
+      font-size: .85rem;
+    }
+    #mobile-menu a:hover i,
+    #mobile-menu a.active i { color: #F0A500; }
+
+    .mobile-divider {
+      height: 1px;
+      background: #eef0f6;
+      margin: .4rem 0;
+    }
+    .mobile-login {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: #0B1E3D;
+      color: #fff !important;
+      padding: .75rem 1.25rem;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: .9rem;
+      margin-top: .5rem;
+      justify-content: center;
+    }
+    .mobile-login:hover { background: #F0A500; color: #07152B !important; }
+
+    /* ── Responsive breakpoint ── */
+    @media (max-width: 900px) {
+      #nav-links, .btn-login { display: none !important; }
+      #hamburger { display: flex; }
+    }
+
+    /* ── Section helpers (shared across pages) ── */
+    .section-pip {
+      display: inline-flex; align-items: center; gap: .5rem;
+      color: #F0A500; font-weight: 600; font-size: .8rem;
+      letter-spacing: .12em; text-transform: uppercase;
+    }
+    .section-pip::before {
+      content:''; display:block; width:28px; height:2px; background:#F0A500;
+    }
+    .gold-divider {
+      width:48px; height:4px; background:#F0A500; border-radius:9px; margin:.75rem 0 1.25rem;
+    }
+    .reveal { opacity:0; transform:translateY(30px); transition:opacity .7s ease,transform .7s ease; }
+    .reveal.visible { opacity:1; transform:none; }
+    .field {
+      width:100%; padding:.75rem 1rem; border-radius:10px;
+      border:1.5px solid #e0e7ef; background:#F4F6FA;
+      font-size:.95rem; outline:none; transition:border .2s,background .2s;
+    }
+    .field:focus { border-color:#F0A500; background:#fff; }
+  </style>
+</head>
+
+<body style="margin:0; background:#F4F6FA;">
+
+<!-- =============================================
+     TOPBAR
+     ============================================= -->
+<div id="site-topbar">
+  <!-- Left: contact -->
+  <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
+    <span style="display:flex; align-items:center; gap:.4rem;">
+      <i class="fa fa-phone-alt" style="color:#F0A500;"></i>
+      {{getTitle.phonNo}}
+    </span>
+    <span style="display:flex; align-items:center; gap:.4rem;">
+      <i class="fa fa-envelope" style="color:#F0A500;"></i>
+      {{getTitle.email}}
+    </span>
+  </div>
+
+  <!-- Right: quick link -->
+  <a href="{% url 'LoginUser' %}"
+     style="display:flex; align-items:center; gap:.4rem; font-weight:600; font-size:.82rem;">
+    <i class="fa fa-laptop" style="color:#F0A500;"></i>
+    School Manager &nbsp;|&nbsp; CBT &nbsp;|&nbsp; SMS &nbsp;|&nbsp; Payment
+  </a>
+</div>
+
+
+<!-- =============================================
+     NAVBAR
+     ============================================= -->
+<nav id="site-navbar" role="navigation" aria-label="Main navigation">
+  <div class="nav-inner">
+
+    <!-- Brand -->
+    <a href="{% url 'MyHome' %}" class="brand-wrap">
+      <img src="{{ getLogo.LogoImage.url }}" alt="School Logo" class="brand-logo">
+      <div class="brand-text">
+        <span class="brand-name">{{ getTitle.name }}</span>
+        <span class="brand-sub">School Management &amp; CBT App</span>
+      </div>
+    </a>
+
+    <!-- Desktop links -->
+    <ul id="nav-links" role="menubar">
+      <li role="none">
+        <a href="{% url 'MyHome' %}" class="active" role="menuitem">Home</a>
+      </li>
+      <li role="none">
+        <a href="#about" role="menuitem">About</a>
+      </li>
+      <!--<li role="none">-->
+      <!--  <a href="{% url 'register_student' %}" role="menuitem">Student Enroll</a>-->
+      <!--</li>-->
+      <li role="none">
+        <a href="{% url 'student_dashboard' %}" role="menuitem">E-Learning</a>
+      </li>
+      <li role="none">
+        <a href="{% url 'student_portal' %}" role="menuitem">CBT Portal</a>
+      </li>
+      <li role="none">
+        <a href="{% url 'CheckResult' %}" role="menuitem">Check Result</a>
+      </li>
+      {% if request.user.is_superuser %}
+      <li role="none">
+        <a href="{% url 'bulk_sms' %}" role="menuitem">Bulk SMS</a>
+      </li>
+      {% endif %}
+      <li role="none">
+        <a href="{% url 'parent_access' %}" role="menuitem">Payments</a>
+      </li>
+    </ul>
+
+    <!-- Login + Hamburger -->
+    <div style="display:flex; align-items:center; gap:.75rem;">
+      <a href="{% url 'LoginUser' %}" class="btn-login">
+        <i class="fa fa-sign-in-alt"></i> Login
+      </a>
+      <button id="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Mobile drawer -->
+  <div id="mobile-menu" role="menu" aria-label="Mobile navigation">
+    <a href="{% url 'MyHome' %}" class="active" role="menuitem">
+      <i class="fa fa-home"></i> Home
+    </a>
+    <a href="#about" role="menuitem">
+      <i class="fa fa-info-circle"></i> About
+    </a>
+    <a href="{% url 'register_student' %}" role="menuitem">
+      <i class="fa fa-user-plus"></i> Student Enroll
+    </a>
+    <a href="{% url 'student_dashboard' %}" role="menuitem">
+      <i class="fa fa-graduation-cap"></i> E-Learning
+    </a>
+    <a href="{% url 'student_portal' %}" role="menuitem">
+      <i class="fa fa-graduation-cap"></i> CBT Portal
+    </a>
+    <a href="{% url 'CheckResult' %}" role="menuitem">
+      <i class="fa fa-poll"></i> Check Result
+    </a>
+    {% if request.user.is_superuser %}
+    <a href="{% url 'bulk_sms' %}" role="menuitem">
+      <i class="fa fa-sms"></i> Bulk SMS
+    </a>
+    {% endif %}
+    <a href="{% url 'parent_access' %}" role="menuitem">
+      <i class="fa fa-credit-card"></i> Payments
+    </a>
+    <div class="mobile-divider"></div>
+    <a href="{% url 'LoginUser' %}" class="mobile-login" role="menuitem">
+      <i class="fa fa-sign-in-alt"></i> Login to Dashboard
+    </a>
+  </div>
+</nav>
+
+
+<!-- =============================================
+     SCRIPTS
+     ============================================= -->
+<script>
+(function () {
+  /* ── Mobile hamburger toggle ── */
+  const ham   = document.getElementById('hamburger');
+  const menu  = document.getElementById('mobile-menu');
+
+  ham.addEventListener('click', function () {
+    const isOpen = menu.classList.toggle('open');
+    ham.classList.toggle('open', isOpen);
+    ham.setAttribute('aria-expanded', isOpen);
+  });
+
+  /* Close drawer when a link is tapped */
+  menu.querySelectorAll('a').forEach(function (link) {
+    link.addEventListener('click', function () {
+      menu.classList.remove('open');
+      ham.classList.remove('open');
+      ham.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  /* ── Sticky shadow on scroll ── */
+  const navbar = document.getElementById('site-navbar');
+  window.addEventListener('scroll', function () {
+    navbar.classList.toggle('scrolled', window.scrollY > 40);
+  }, { passive: true });
+
+  /* ── Lazy-load all images ── */
+  function applyLazy(img) {
+    if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+  }
+  document.querySelectorAll('img').forEach(applyLazy);
+  new MutationObserver(function (mutations) {
+    mutations.forEach(function (m) {
+      m.addedNodes.forEach(function (n) {
+        if (n.tagName === 'IMG') applyLazy(n);
+      });
+    });
+  }).observe(document.body, { childList: true, subtree: true });
+})();
+</script>

@@ -1,0 +1,386 @@
+{% load static %}
+{% include 'header.html' %}
+{% load custom_filters %}
+
+<style>
+  .report-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 30px;
+    margin-top: 40px;
+  }
+
+  .school-header {
+    text-align: center;
+    border-bottom: 3px solid #0d6efd;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+  }
+
+  .school-header img {
+    height: 80px;
+    margin-bottom: 10px;
+  }
+
+  .school-header h3 {
+    margin: 0;
+    font-weight: 700;
+    color: #0d6efd;
+  }
+
+  .school-header p {
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+  }
+
+  .student-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+  }
+
+  .student-info h5 {
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .student-info small {
+    color: #777;
+  }
+
+  table th {
+    background-color: #0d6efd !important;
+    color: white !important;
+    text-align: center;
+  }
+
+  table td {
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .footer-note {
+    margin-top: 40px;
+    text-align: center;
+    color: #555;
+    font-size: 14px;
+  }
+
+  .signature {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 30px;
+  }
+
+  .signature div {
+    text-align: center;
+    border-top: 1px solid #333;
+    width: 200px;
+    padding-top: 5px;
+  }
+
+  .print-btn {
+    text-align: right;
+    margin-top: 20px;
+  }
+
+  /* ✅ Print styles — only print the report card */
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+
+    #reportCard, #reportCard * {
+      visibility: visible;
+    }
+
+    #reportCard {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      background: white;
+    }
+
+    .print-btn {
+      display: none !important;
+    }
+  }
+body {
+    background: url("{% static 'img/wha.jpg' %}") no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    font-family: 'Poppins', sans-serif;
+}
+
+</style>
+<style>
+      .result-card {
+        border-radius: 18px;
+        overflow: hidden;
+        animation: fadeInUp .6s ease;
+      }
+
+      @keyframes fadeInUp {
+        from {opacity:0; transform: translateY(20px);}
+        to {opacity:1; transform: translateY(0);}
+      }
+
+      .result-header {
+        background: linear-gradient(135deg,#2563eb,#1e40af);
+        padding: 1.5rem;
+      }
+
+      .form-control, select {
+        border-radius: 10px;
+        padding: 12px;
+      }
+
+      .form-control:focus, select:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 .2rem rgba(37,99,235,.15);
+      }
+
+      .check-btn {
+        background: linear-gradient(135deg,#2563eb,#1e40af);
+        border: none;
+        padding: 12px;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: .3s;
+      }
+
+      .check-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,.2);
+      }
+
+      .floating-label {
+        font-size: .85rem;
+        color: #6b7280;
+        margin-bottom: 5px;
+      }
+    </style>
+<div class="container py-5">
+
+  <!-- ✅ Result Check Form -->
+    
+
+    <div class="row justify-content-center mt-5">
+      <div class="col-md-8">
+
+        <div class="card shadow-lg border-0 result-card">
+
+          <div class="result-header text-white text-center">
+            <h4 class="mb-1 fw-bold">Student Result Portal</h4>
+            <small>Secure Academic Result Checker</small>
+          </div>
+
+          <div class="card-body p-4">
+
+            <form method="POST">
+              {% csrf_token %}
+
+              <div class="mb-3">
+                <div class="floating-label">Admission Number</div>
+                {{ form.admission_number }}
+              </div>
+
+              <div class="mb-3">
+                <div class="floating-label">Access Code</div>
+                {{ form.access_code }}
+              </div>
+
+              <div class="mb-3">
+                <div class="floating-label">Academic Term</div>
+                {{ form.term }}
+              </div>
+
+              <div class="mb-4">
+                <div class="floating-label">Academic Session</div>
+                {{ form.session }}
+              </div>
+
+              <button type="submit" class="btn check-btn text-white w-100">
+                <i class="fa fa-book-reader"></i> Check Result
+              </button>
+
+            </form>
+
+            {% if error %}
+            <div class="alert alert-danger mt-3 text-center rounded-3">
+              {{ error }}
+            </div>
+            {% endif %}
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+
+  <!-- ✅ Report Card Section -->
+  {% if student and results %}
+  <div class="report-card mt-5" id="reportCard">
+
+    <!-- School Header -->
+    <div class="school-header">
+      {% if getLogo %}
+        <img src="{{ getLogo.LogoImage.url }}" alt="School Logo">
+      {% endif %}
+      <h3>{{ getTitle.name|default:"SCHOOL NAME" }}</h3>
+      <p>{{ getTitle.address|default:"School Address" }}</p>
+      <p>
+        <strong>Tel:</strong> {{ getTitle.phoneNo|default:"+234 7067071427" }} |
+        <strong>Email:</strong> {{ getTitle.email|default:"info@school.com" }}
+      </p>
+    </div>
+
+    <!-- Student Info -->
+    <div class="student-info">
+      <div class="row">
+        <div class="col-md-6">
+          <h5>Student: {{ student.full_name }}</h5>
+          <small>Admission Number: {{ student.admission_number }}</small>
+        </div>
+        <div class="col-md-3 text-md-end">
+          <h5>Class: {{ student.level_or_class.name }}</h5>
+          <small>Department: {{ student.department.name }}</small>
+        </div>
+        <div class="col-md-3 text-md-end">
+          <h6>Term: {{ term}} - <b>{{session}}</b></h6>
+          <small>Attendance:</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="table-responsive">
+ <table class="table table-bordered align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Course</th>
+            <th>Exam Score</th>
+            <th>Test Score</th>
+            <th>Total</th>
+            <th>Percentage</th>
+            <th>Grade</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for exam in results %}
+
+            {% with test_score=ts_score_map|get_item:exam.course.id|default:0 %}
+
+                {% with total=exam.percentage|add:test_score %}
+                {% with max_total=exam.total_questions|add:30 %}
+                {% with percentage=total|div:100|mul:100 %}
+
+                <tr>
+                    <!-- Course -->
+                    <td>{{ exam.course.title }}</td>
+
+                    <!-- Exam -->
+                    <td>{{ exam.percentage|floatformat:0 }}</td>
+
+                    <!-- Tests (1st + 2nd + 3rd) -->
+                    <td>{{ test_score }}</td>
+
+                    <!-- Total -->
+                    <td class="{% if total >= 70 %}bg-success text-white{% elif total >= 60 %}bg-primary text-white{% elif total >= 50 %}bg-info text-white{% elif total >= 45 %}bg-warning text-dark{% elif total >= 40 %}bg-warning text-dark{% else %}bg-danger text-white{% endif %}">
+                        {{ total }}
+                    </td>
+
+                    <!-- Percentage -->
+                    <td class="{% if percentage >= 70 %}bg-success text-white{% elif percentage >= 60 %}bg-primary text-white{% elif percentage >= 50 %}bg-info text-white{% elif percentage >= 45 %}bg-warning text-dark{% elif percentage >= 40 %}bg-warning text-dark{% else %}bg-danger text-white{% endif %}">
+                        {{ percentage|floatformat:2 }}%
+                    </td>
+
+                    <!-- Grade -->
+                    <td class="{% if percentage >= 70 %}bg-success text-white{% elif percentage >= 60 %}bg-primary text-white{% elif percentage >= 50 %}bg-info text-white{% elif percentage >= 45 %}bg-warning text-dark{% elif percentage >= 40 %}bg-warning text-dark{% else %}bg-danger text-white{% endif %}">
+                        {% if percentage >= 70 %} A
+                        {% elif percentage >= 60 %} B
+                        {% elif percentage >= 50 %} C
+                        {% elif percentage >= 45 %} D
+                        {% elif percentage >= 40 %} E
+                        {% else %} F
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+
+            {% endwith %}
+
+        {% empty %}
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    No results available for this term.
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</div>
+
+
+
+
+<!--<div class="signature">-->
+<!--      {% if results %}-->
+<!--<div class="mt-4 p-3 border rounded bg-light">-->
+<!--    <h5 class="fw-bold">Overall Result Summary</h5>-->
+<!--    <p><strong>Total Exam Score:</strong> {{ total_exam_score|floatformat:2 }}</p>-->
+<!--    <p><strong>Total Test Score:</strong> {{ total_test_score|floatformat:2 }}</p>-->
+<!--    <p><strong>Total Score:</strong> {{ grand_total|floatformat:2 }}</p>-->
+<!--    <p><strong>Overall Percentage:</strong> {{ overall_percentage|floatformat:2 }}%</p>-->
+<!--    <p><strong>Overall Grade:</strong>-->
+<!--        {% if overall_percentage >= 70 %} A-->
+<!--        {% elif overall_percentage >= 60 %} B-->
+<!--        {% elif overall_percentage >= 50 %} C-->
+<!--        {% elif overall_percentage >= 45 %} D-->
+<!--        {% elif overall_percentage >= 40 %} E-->
+<!--        {% else %} F-->
+<!--        {% endif %}-->
+<!--    </p>-->
+<!--</div>-->
+<!--{% endif %}-->
+
+    <!--</div>-->
+    <!-- Signature Section -->
+    <div class="signature">
+      <div>Class Teacher</div>
+      <div>Principal</div>
+    </div>
+
+    <!-- Footer Note -->
+    <div class="footer-note">
+      <p>© {{ getTitle.name|default:"SCHOOL NAME" }} — Powered by 
+        <a href="https://heroesgroupofschools.com" target="_blank">
+          Heroes Group of Schools
+        </a>
+      </p>
+    </div>
+
+    <!-- ✅ Print Button -->
+    <div class="print-btn">
+      <button class="btn btn-outline-primary" type="button" onclick="window.print()">
+        🖨 Print Report Card
+      </button>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% include 'footer.html' %}

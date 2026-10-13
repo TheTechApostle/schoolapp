@@ -1,0 +1,20 @@
+{% load static %}
+{% include '../header.html' %}
+    <style>
+        body { background-color: #f4f6f9; }
+        .card-custom { border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-top: 100px; }
+    </style>
+
+<body>
+<div class="container d-flex justify-content-center">
+    <div class="col-md-5">
+        <div class="card card-custom text-center p-5">
+            <h2 class="text-success mb-3">Payment Successful!</h2>
+            <p>Thank you for your payment. Your transaction has been completed successfully.</p>
+            <a href="{% url 'parent_child_dashboard' %}" class="btn btn-primary mt-3">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

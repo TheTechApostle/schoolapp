@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+<div class="d-flex flex-column flex-lg-row min-vh-100" id="dashboard">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside id="sidebar" class="text-white p-4 d-flex flex-column justify-content-between">
+        <div>
+            <div class="d-flex align-items-center mb-4">
+                <i class="fa fa-chalkboard-teacher fs-3 me-2 text-warning"></i>
+                <h4 class="m-0 fw-bold">Teacher Panel</h4>
+            </div>
+            <hr class="opacity-50">
+
+            <h6 class="text-uppercase fw-bold mt-3 text-light-50">My Courses</h6>
+            <ul class="nav flex-column mt-2">
+                {% for course in courses %}
+                    <li class="nav-item mb-2">
+                        <a href="{% url 'add_questions' %}?course={{ course.id }}" 
+                           class="nav-link text-white py-2 px-3 rounded-3 hover-bg d-flex align-items-center btn btn-primary">
+                            <i class="fa fa-book me-2 text-warning"></i> 
+                            <span class="">{{ course.title }}</span>
+                        </a>
+                    </li>
+                {% empty %}
+                    <li class="nav-item text-muted ps-2 mt-2">No courses assigned.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="mt-4">
+            <hr class="opacity-50">
+            <button id="themeToggle" class="btn btn-outline-light w-100 rounded-pill shadow-sm">
+                <i class="fa fa-moon me-1"></i> Toggle Dark Mode
+            </button>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN SECTION ===== -->
+    <main class="flex-fill p-4 bg-light-gradient">
+        <div class="container-fluid">
+
+            <!-- Step 1: Select Department, Class, Course -->
+            {% if not exam %}
+            <div class="card shadow-lg border-0 mb-4">
+                <div class="card-body">
+                    <h4 class="fw-bold mb-3">Step 1: Select Department → Class → Course</h4>
+                    <form method="POST" action="{% url 'add_questions' %}">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Department</label>
+                                <select name="department" id="departmentSelect" class="form-select">
+                                    <option value="">-- Select Department --</option>
+                                    {% for dept in departments %}
+                                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Class / Level</label>
+                                <select name="classgroup" id="classSelect" class="form-select">
+                                    <option value="">-- Select Class --</option>
+                                    {% for cls in classes %}
+                                        <option value="{{ cls.id }}">{{ cls.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Course</label>
+                                <select name="course" id="courseSelect" class="form-select">
+                                    <option value="">-- Select Course --</option>
+                                    {% for crs in courses %}
+                                        <option value="{{ crs.id }}" data-dept="{{ crs.department.id }}" data-class="{{ crs.classgroup.id }}">
+                                            {{ crs.title }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 text-end">
+                            <button type="submit" name="select_course" class="btn btn-primary rounded-pill">
+                                <i class="fa fa-arrow-right me-1"></i> Continue
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if exam %}
+            <!-- Step 2: Add Questions -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold text-dark mb-0">
+                    Add Questions for 
+                    <span class="text-primary">{{ exam.course.title }}</span>
+                </h3>
+                <a href="{% url 'Teacherdashboard' %}" class="btn btn-outline-secondary rounded-pill">
+                    <i class="fa fa-arrow-left me-1"></i> Back
+                </a>
+            </div>
+
+            <form method="POST" id="questionForm" class="bg-white p-4 rounded-4 shadow-lg border-0">
+                {% csrf_token %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-2" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% if messages %}
+                        <div class="container mt-3">
+                            {% for message in messages %}
+                                <div 
+                                    class="alert 
+                                        {% if message.tags == 'error' %}alert-danger
+                                        {% elif message.tags == 'success' %}alert-success
+                                        {% elif message.tags == 'warning' %}alert-warning
+                                        {% else %}alert-info{% endif %} 
+                                        alert-dismissible fade show" 
+                                    role="alert">
+                                    
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                <input type="hidden" name="save_questions" value="1">
+                <input type="hidden" name="exam_id" value="{{ exam.id }}">
+                <label class="form-label fw-semibold">Term / Semester</label>
+                <select name="term" class="form-select" required>
+                                        <option value="">--Select--</option>
+                                        <option value="First Term">First Term</option>
+                                        <option value="Second Term">Second Term</option>
+                                        <option value="Third Term">Third Term </option>
+                                        <option value="First Semester">First Semester</option>
+                                        <option value="Second Semester">Second Semester</option>
+                                        <option value="Third Semester">Third Semester</option>
+                                    </select>
+                <!-- QUESTION CONTAINER -->
+                <div id="question-container">
+                    <div class="card border-0 shadow-sm mb-4 question-card">
+                        <div class="card-body">
+                            <h5 class="fw-bold text-dark mb-3">Question 1</h5>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Question Text</label>
+                                <div id="editor_1" class="border rounded-3 bg-light" style="min-height:120px;border:2px solid #6ba5f1ff"></div>
+                                <input type="hidden" name="question_text_1" id="hidden_1">
+                            </div>
+
+                            <div class="row">
+                                {% for letter in "ABCD" %}
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-semibold">Option {{ letter }}</label>
+                                    <input type="text" name="option_{{ letter|lower }}_1" class="form-control" placeholder="Enter option {{ letter }}">
+                                </div>
+                                {% endfor %}
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Correct Answer</label>
+                                    <select name="correct_answer_1" class="form-select">
+                                        <option value="">--Select--</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                        <option value="C">C</option>
+                                        <option value="D">D</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    {% comment %} <label class="form-label fw-semibold">Term / Semester</label> {% endcomment %}
+                                    {% comment %} <select name="correct_answer_1" class="form-select">
+                                        <option value="">--Select--</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                        <option value="C">C</option>
+                                        <option value="D">D</option>
+                                    </select> {% endcomment %}
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="question_count" name="question_count" value="1">
+
+                <div class="d-flex justify-content-between mt-3">
+                    <button type="button" id="addQuestion" class="btn btn-outline-primary rounded-pill">
+                        <i class="fa fa-plus me-1"></i> Add Another Question
+                    </button>
+                    <button type="submit" class="btn btn-success rounded-pill shadow-sm">
+                        <i class="fa fa-save me-1"></i> Save Questions
+                    </button>
+                </div>
+            </form>
+            {% endif %}
+            <!-- ✅ Success Modal -->
+            <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-4 shadow">
+                <div class="modal-body text-center p-5">
+                    <i class="fa fa-check-circle text-success display-3 mb-3"></i>
+                    <h4 class="fw-bold mb-2" id="successModalLabel">Success!</h4>
+                    <p class="mb-4">{{ success_message }}</p>
+                    <button type="button" class="btn btn-success px-4 rounded-pill" data-bs-dismiss="modal">OK</button>
+                </div>
+                </div>
+            </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Quill JS -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+<script>
+let questionCounter = 1;
+const quillEditors = {};
+
+function initQuill(id) {
+    const quill = new Quill(`#${id}`, {
+        theme: 'snow',
+        placeholder: 'Type your question here (e.g. Simplify the fraction...)',
+        modules: {
+            toolbar: [
+                [{ 'font': [] }, { 'size': [] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'script': 'sub' }, { 'script': 'super' }],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['clean']
+            ]
+        }
+    });
+    const hiddenInput = document.getElementById(`hidden_${id.split('_')[1]}`);
+    quill.on('text-change', () => {
+        hiddenInput.value = quill.root.innerHTML;
+    });
+    quillEditors[id] = quill;
+}
+
+document.addEventListener("DOMContentLoaded", () => initQuill('editor_1'));
+
+document.getElementById('addQuestion').addEventListener('click', () => {
+    questionCounter++;
+    const container = document.getElementById('question-container');
+
+    const newQuestion = `
+    <div class="card border-0 shadow-sm mb-4 question-card position-relative" id="question_${questionCounter}">
+        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 delete-question" 
+            data-id="${questionCounter}" title="Remove this question">
+            <i class="fa fa-times"></i>
+        </button>
+        <div class="card-body">
+            <h5 class="fw-bold text-dark mb-3">Question ${questionCounter}</h5>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Question Text</label>
+                <div id="editor_${questionCounter}" class="border rounded-3 bg-light" style="min-height:120px;"></div>
+                <input type="hidden" name="question_text_${questionCounter}" id="hidden_${questionCounter}">
+            </div>
+            <div class="row">
+                ${['A','B','C','D'].map(letter => `
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Option ${letter}</label>
+                    <input type="text" name="option_${letter.toLowerCase()}_${questionCounter}" class="form-control" placeholder="Enter option ${letter}">
+                </div>`).join('')}
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Correct Answer</label>
+                    <select name="correct_answer_${questionCounter}" class="form-select">
+                        <option value="">--Select--</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    container.insertAdjacentHTML('beforeend', newQuestion);
+    document.getElementById('question_count').value = questionCounter;
+
+    // Initialize Quill after insertion
+    setTimeout(() => initQuill(`editor_${questionCounter}`), 100);
+});
+
+// 🧹 DELETE QUESTION HANDLER
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.delete-question')) {
+        const btn = e.target.closest('.delete-question');
+        const id = btn.getAttribute('data-id');
+        const questionCard = document.getElementById(`question_${id}`);
+
+        if (questionCard) {
+            questionCard.remove();
+            delete quillEditors[`editor_${id}`];
+        }
+
+        // Optional: re-number remaining questions visually
+        const allCards = document.querySelectorAll('.question-card');
+        allCards.forEach((card, index) => {
+            card.querySelector('h5').textContent = `Question ${index + 1}`;
+        });
+    }
+});
+document.getElementById('questionForm').addEventListener('submit', function(e) {
+    const selects = document.querySelectorAll('select[name^="correct_answer_"]');
+    for (const sel of selects) {
+        if (!sel.value) {
+            alert("Please select the correct answer for each question before saving.");
+            e.preventDefault();
+            return;
+        }
+    }
+});
+
+</script>
+<style>
+.delete-question {
+    border-radius: 50%;
+    padding: 0.3rem 0.5rem;
+    transition: all 0.2s ease;
+}
+.delete-question:hover {
+    transform: scale(1.1);
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+    
+</style>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<title>{{ course.title }}</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+
+body{
+background:#f1f5f9;
+font-family:system-ui;
+}
+
+.course-wrapper{
+max-width:900px;
+margin:50px auto;
+}
+
+.course-card{
+background:white;
+border-radius:20px;
+padding:40px;
+box-shadow:0 10px 40px rgba(0,0,0,.1);
+}
+
+.badge-status{
+padding:6px 16px;
+border-radius:999px;
+font-weight:600;
+}
+
+.active{background:#bbf7d0;}
+.inactive{background:#fecaca;}
+
+.enroll-btn{
+background:linear-gradient(135deg,#2563eb,#1e40af);
+border:none;
+border-radius:12px;
+color:white;
+padding:12px 24px;
+font-weight:600;
+}
+
+.price{
+font-size:1.3rem;
+font-weight:700;
+color:#16a34a;
+}
+
+.meta{
+color:#64748b;
+font-size:.9rem;
+}
+
+</style>
+</head>
+
+{% include "header.html" %}
+
+<div class="container-fluid">
+<div class="row">
+
+<!-- Sidebar -->
+<div class="col-md-3 p-0">
+{% include "elearning/sidebar.html" %}
+</div>
+<div class="course-wrapper">
+
+<div class="course-card">
+
+<a href="{% url 'techcourse_list' %}" class="text-decoration-none mb-3 d-inline-block">
+<i class="fa fa-arrow-left"></i> Back to courses
+</a>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+<h3 class="fw-bold">{{ course.title }}</h3>
+
+{% if course.is_active %}
+<span class="badge-status active">Active</span>
+{% else %}
+<span class="badge-status inactive">Closed</span>
+{% endif %}
+
+</div>
+
+<p class="text-muted mb-4">
+{{ course.description }}
+</p>
+<div class="ratio ratio-16x9 rounded shadow mb-4">
+
+    {% if video_id %}
+        <!-- ✅ YouTube Embed -->
+        <iframe
+            src="https://www.youtube.com/embed/{{ video_id }}"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+        </iframe>
+
+    {% elif drive_id %}
+        <!-- ✅ Google Drive Embed -->
+        <iframe
+            src="https://drive.google.com/file/d/{{ drive_id }}/preview"
+            allowfullscreen style="height:400px">
+        </iframe>
+
+    {% else %}
+        <p class="text-danger fw-bold">
+            Video link is invalid or not supported.
+        </p>
+    {% endif %}
+
+</div>
+
+
+<div class="row mb-4">
+
+<div class="col-md-6 meta">
+<i class="fa fa-clock"></i> Duration: {{ course.duration }}
+</div>
+
+<div class="col-md-6 text-md-end price text-bg-dark w-25">
+{{ course.price }}
+</div>
+
+</div>
+
+<hr>
+
+<div class="mt-4 d-flex gap-3">
+
+
+
+</div>
+
+</div>
+
+</div>
+
+{% include "footer.html" %}
+
+</body>
+</html>

@@ -1,0 +1,94 @@
+{% load static %}
+{% include 'header.html' %}
+
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  .page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #f0f4ff, #d9e8ff);
+  }
+
+  .success-card {
+    background: #fff;
+    border-radius: 1rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 0 25px rgba(0,0,0,0.08);
+    animation: fadeInUp 0.8s ease forwards;
+  }
+
+  .success-card svg {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 1.5rem;
+    fill: #28a745;
+  }
+
+  h2 {
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: #555;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+  }
+
+  .btn-primary {
+    background-color: #007bff;
+    border-radius: 8px;
+    padding: 0.6rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+    color: #fff;
+  }
+
+  .text-muted {
+    display: inline-block;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="page-wrapper">
+  <div class="success-card">
+    <!-- Checkmark Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+      <circle cx="26" cy="26" r="25" fill="none" stroke="#28a745" stroke-width="2"/>
+      <path fill="none" stroke="#28a745" stroke-width="5" d="M14 27l7 7 17-17"/>
+    </svg>
+
+    <h2>Registration Successful!</h2>
+    <p>Congratulations! The student has been successfully registered.</p>
+
+    <a href="{% url 'register_student' %}" class="btn btn-primary">Register Another Student</a>
+    <br><br>
+    <a href="{% url 'MyHome' %}" class="text-decoration-none text-muted">Go to Dashboard</a>
+  </div>
+</div>
+
+{% include 'footer.html' %}

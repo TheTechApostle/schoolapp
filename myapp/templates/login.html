@@ -1,0 +1,64 @@
+{% load static %}
+
+{% include 'header.html' %}
+
+<div class="container-fluid header bg-white p-0 mt-3">
+  <div class="row g-0">
+    
+    <!-- Left: Login Form -->
+    <div class="col-12 col-md-6 col-lg-6 d-flex align-items-center justify-content-center">
+      <div class="mx-auto my-3 p-4 p-md-5 bg-white rounded-4 shadow-lg animate__animated animate__fadeIn" style="backdrop-filter: blur(5px); width: 100%; max-width: 500px;">
+        <h5 class="display-6 mb-4 text-center text-md-start">
+          {{ getTitle.name }} <span class="text-primary">Login</span> Page
+        </h5>
+
+        <form method="POST">
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% elif Oops %}
+              <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ Oops }}
+              </div>
+          {% endif %}
+          
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next }}">
+          <div class="form-group mb-3">
+            {{ form.username.label_tag }}
+            {{ form.username }}
+          </div>
+          <div class="form-group mb-3">
+            {{ form.password.label_tag }}
+            {{ form.password }}
+          </div>
+          <div class="form-group">
+            <button type="submit" class="btn btn-primary text-white w-100 py-2">Login</button>
+          </div>
+
+          <div class="d-flex gap-2 mt-3 justify-content-between">
+            <a class="text-primary" href="">Forgot Password?</a>
+            <a class="text-end text-dark" href="">
+              Don't have an account? <span class="text-primary">Register!</span>
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right: Background Image -->
+    <div class="col-lg-6 d-none d-lg-block"
+         style="background-image: url('{% static 'img/login.jpg' %}'); 
+                background-size: cover; 
+                background-position: center; 
+                min-height: 100vh;">
+    </div>
+  </div>
+</div>
+
+{% include 'footer.html' %}
+</body>
+</html>
